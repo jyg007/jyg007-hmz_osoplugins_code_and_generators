@@ -1,0 +1,3 @@
+FROM vault-cold-bridge:1.19.15
+
+ADD --chown=default:root ./cold_vault_dir /App_Data

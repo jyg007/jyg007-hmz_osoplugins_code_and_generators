@@ -1,0 +1,37 @@
+global(
+  DefaultNetstreamDriver="gtls"
+  DefaultNetstreamDriverCAFile="/logging/ca.crt"
+  DefaultNetstreamDriverCertFile="/logging/client.crt"
+  DefaultNetstreamDriverKeyFile="/logging/client-key.pem"
+)
+
+module(load="imfile")
+
+ruleset(name="forward-logging") {
+  action(
+    type="omfwd"
+    target="${SYSLOG_HOSTNAME}"
+    protocol="tcp"
+    port="${SYSLOG_PORT}"
+    StreamDriver="gtls"
+    StreamDriverMode="1"
+    StreamDriverAuthMode="x509/name"
+    StreamDriverPermittedPeers="${SYSLOG_HOSTNAME}"
+  )
+}
+
+input(
+  type="imfile"
+  file="/data/logs/*.out"
+  tag="backend_sidecar-stdout"
+  ruleset="forward-logging"
+  addMetadata="on"
+)
+
+input(
+  type="imfile"
+  file="/data/logs/*.err"
+  tag="backend_sidecar-stderr"
+  ruleset="forward-logging"
+  addMetadata="on"
+)

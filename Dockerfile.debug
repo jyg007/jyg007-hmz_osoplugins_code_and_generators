@@ -1,0 +1,14 @@
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+
+ARG COMPONENT
+FROM ${COMPONENT}:latest as component
+RUN apt-get update && \
+    apt-get install -y openssh-server neovim && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    mkdir -p /var/run/sshd
+COPY ./tests /app-root/tests
+COPY ./pytest.ini /app-root
+RUN echo 'source /opt/venv/bin/activate && cd /app-root && coverage run -m pytest -vv && coverage report --omit="tests/*" --omit="dap-blueprint/*"' > /app-root/run-unit-tests.sh
