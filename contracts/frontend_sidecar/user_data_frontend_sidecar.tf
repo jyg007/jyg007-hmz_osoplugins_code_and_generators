@@ -44,7 +44,7 @@ resource "hpcr_text_encrypted" "frontend_sidecar_contract" {
 }
 
 resource "local_file" "frontend_sidecar_contract" {
-  count    = 1
+  count    = var.DEBUG ? 1 : 0
   content  = yamlencode(local.frontend_sidecar_workload)
   filename = "frontend_sidecar_contract.yml"
   file_permission = "0664"
