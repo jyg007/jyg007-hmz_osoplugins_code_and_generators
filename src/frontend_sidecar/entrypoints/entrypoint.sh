@@ -18,14 +18,7 @@ echo "${FRONTEND_KEY}" >/certs/frontend-key.pem
 
 export COMPONENT_FINGERPRINTS="${CONFIRMATION_FINGERPRINT}"
 
-LOGDNA_TAG=frontend_sidecar
 CONF_FILE=supervisord-frontend_sidecar.conf
-
-mkdir -p /data/logs
-mkdir -p /logging
-echo "${SYSLOG_SERVER_CERT}" >/logging/ca.crt
-echo "${SYSLOG_CLIENT_CERT}" >/logging/client.crt
-echo "${SYSLOG_CLIENT_KEY}" >/logging/client-key.pem
 
 cd /app-root/entrypoints
 

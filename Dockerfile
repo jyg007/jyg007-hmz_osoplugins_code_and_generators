@@ -48,7 +48,7 @@ ENV PYTHONUNBUFFERED=1
 
 RUN apt-get update && \
     apt-get upgrade -y && \
-    apt-get install -y python3 python3-pip python3-venv curl openssh-server gettext-base nginx rsyslog-gnutls && \
+    apt-get install -y python3 python3-pip python3-venv curl openssh-server gettext-base nginx && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     mkdir -p /var/run/sshd
@@ -62,7 +62,6 @@ COPY ./src /app-root/src
 COPY --from=common-src ./pre_request.py /app-root/src/flask_util
 COPY ./entrypoints /app-root/entrypoints
 COPY ./nginx /app-root/nginx
-COPY ./logging /app-root/logging
 
 ENTRYPOINT ["/app-root/entrypoints/entrypoint.sh"]
 

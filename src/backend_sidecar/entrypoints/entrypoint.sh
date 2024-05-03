@@ -18,14 +18,7 @@ echo "${BACKEND_KEY}" >/certs/backend-key.pem
 
 export COMPONENT_FINGERPRINTS="${BRIDGE_FINGERPRINT}"
 
-LOGDNA_TAG=backend_sidecar
 CONF_FILE=supervisord-backend_sidecar.conf
-
-mkdir -p /data/logs
-mkdir -p /logging
-echo "${SYSLOG_SERVER_CERT}" >/logging/ca.crt
-echo "${SYSLOG_CLIENT_CERT}" >/logging/client.crt
-echo "${SYSLOG_CLIENT_KEY}" >/logging/client-key.pem
 
 cd /app-root/entrypoints
 

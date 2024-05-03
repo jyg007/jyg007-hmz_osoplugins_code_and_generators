@@ -55,7 +55,7 @@ class Download(Resource):
     def get(self):
         os.makedirs(consts.SIGNED_DIR, exist_ok=True)
         documents = bulk_download()
-        return {'documents': documents, 'count': len(documents)}
+        return {'documents': documents, 'count': len(documents) }
 
 
 @api.route('/status', methods=['GET'])

@@ -47,10 +47,12 @@ class Download(Resource):
         data_dir = bulk_download()
         for filename in os.listdir(data_dir):
             filepath = os.path.join(data_dir, filename)
+            logger.info(filepath)
             with open(filepath, 'r') as f:
                 contents = f.read()
                 os.remove(filepath)
-                confirmed_files.append({'id': filename, 'content': contents})
+                confirmed_files.append({'id': filename, 'content': contents, 'metadata': "" })
+  #      logger.info(len(confirmed_files))
         return {'documents': confirmed_files, 'count': len(confirmed_files)}
 
 

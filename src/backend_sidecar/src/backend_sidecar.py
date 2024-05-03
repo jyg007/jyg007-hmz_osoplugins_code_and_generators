@@ -32,7 +32,10 @@ def bulk_upload(from_dir=consts.PREPARED_DIR):
         os.remove(filepath)
         f_j.close
 
-    content = { "vaultId" : jcontents["vaultId"] , "accounts" : v_ac , "transactions" :  v_tx  , "manifests": v_ma }
+    try: 
+      content = { "vaultId" : jcontents["vaultId"] , "accounts" : v_ac , "transactions" :  v_tx  , "manifests": v_ma }
+    except:
+      return
 
     filepath = os.path.join(consts.PREPARED_DIR, jcontents["vaultId"])
 
@@ -73,7 +76,7 @@ def bulk_download(to_dir=consts.SIGNED_DIR):
     for filename in os.listdir(to_dir):
         filepath = os.path.join(to_dir, filename)
         with open(filepath, 'r') as f:
-            documents.append({ 'id': filename, 'content': f.read() })
+            documents.append({ 'id': filename, 'content': f.read(), 'metadata': "" })
         os.remove(filepath)
     return documents
 

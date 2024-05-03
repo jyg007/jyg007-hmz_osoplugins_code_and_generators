@@ -95,6 +95,7 @@ def bulk_download(to_dir=consts.PREPARED_DIR):
 
         with open(file_path, 'r') as f_j:
             jcontents = json.load(f_j)
+            #logger.info(json.dumps(jcontents))
             for i in jcontents["transactions"]:
                 content = { "vaultId" : jcontents["vaultId"] , "accounts" : [] , "transactions" : [ i ] , "manifests": []}
                 filepath = os.path.join(consts.PREPARED_DIR,i["transactionId"])
