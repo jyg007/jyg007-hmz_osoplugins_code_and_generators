@@ -6,3 +6,6 @@ HPCR_CERT=null
 
 # Container Configuration
 SIDECAR_IMAGE=""
+
+# Vault
+BACKEND_ENDPOINT="http://prefix-oso-cs-backend.data23.dap.local:9999"
