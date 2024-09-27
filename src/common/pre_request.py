@@ -1,7 +1,7 @@
 #
 # Licensed Materials - Property of IBM
 #
-# (c) Copyright IBM Corp. 2023, 2024
+# (c) Copyright IBM Corp. 2023
 #
 # The source code for this program is not published or otherwise
 # divested of its trade secrets, irrespective of what has been
@@ -53,6 +53,12 @@ def load_fingerprints():
     return fingerprint
 
 
+def set_cert():
+    cert_bytes = unquote(request.headers["X-SSL-CERT"]).encode("utf-8")
+    request.x_oso = dict(
+        x509_cert=x509.load_pem_x509_certificate(cert_bytes, default_backend())
+    )
+
 def bind_flask_before_request(sender: Flask, **extras) -> None:
     logger.info(
         f"HTTP Method: {request.method} URL Path: {request.path}")
@@ -66,8 +72,7 @@ def bind_flask_before_request(sender: Flask, **extras) -> None:
     if 'X-SSL-CERT' not in request.headers:
         sender.logger.info('[X-SSL-CERT] not in request header')
         abort(401, {'error': {'code': '401', 'message': 'Unauthorized'}})
-
-    fingerprint = bytearray(x509_cert.fingerprint(hashes.SHA1())).hex()
+    set_cert()
 
     pub_key = (
         request.x_oso["x509_cert"]
