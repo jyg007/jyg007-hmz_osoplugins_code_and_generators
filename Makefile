@@ -1,5 +1,5 @@
-REGISTRY_URL 	?= us.icr.io
-REGISTRY_NS	= dap-osc-dev
+REGISTRY_URL 	?= registry.control23.dap.local
+REGISTRY_NS	= oso
 
 sidecars	:= frontend_sidecar backend_sidecar
 run_sidecars	:= $(addprefix run-,$(sidecars))
