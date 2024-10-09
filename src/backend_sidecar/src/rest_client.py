@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import os
+import pathlib
 import uuid
 
 import requests
@@ -16,41 +17,58 @@ session.headers.update({"X-SSL-CERT": "Path to cert"})
 
 
 def get_backend_endpoint():
-    if "BACKEND_ENDPOINT" not in os.environ:
+    backend_endpoint = os.environ.get("BACKEND_ENDPOINT")
+    if not backend_endpoint:
         raise Exception("BACKEND_ENDPOINT not found")
-    return os.environ["BACKEND_ENDPOINT"]
+    return backend_endpoint
 
 
-def upload_prepared_doc(filepath):
-    url = get_backend_endpoint() + "/feed/upload"
-    filename = filepath.split("/")[-1]
-    files = {"files": (filename, open(filepath, "rb").read())}
-    response = session.post(url=url, files=files)
-    return response
+def upload_prepared_doc(filepath) -> requests.Response | Exception:
+    try:
+        url = f"{get_backend_endpoint()}/feed/upload"
+        filepath = pathlib.Path(filepath)
+        with filepath.open("rb") as file:
+            files = {"files": (filepath.name, file)}
+            response = session.post(url=url, files=files)
+            response.raise_for_status()
+        return response
+    except Exception as e:
+        return e
 
 
 def download_signed_file(save_dir):
-    url = get_backend_endpoint() + "/feed/download?clean=true"
-    response = session.get(url=url)
-    return write_document(response, save_dir)
+    try:
+        url = f"{get_backend_endpoint()}/feed/download?clean=true"
+        response = session.get(url=url)
+        return write_document(response, save_dir)
+    except Exception as e:
+        return e
 
 
-def write_document(response, save_dir):
-    # Check if attachment is in response
+def write_document(
+    response: requests.Response, save_dir: str
+) -> pathlib.Path | None | Exception:
     if "Content-Disposition" not in response.headers:
         return None
-    # make filename unique
+
+    dir_path = pathlib.Path(save_dir)
+    dir_path.mkdir(parents=True, exist_ok=True)
     filename = str(uuid.uuid4())
-    filepath = os.path.join(save_dir, filename)
-    with open(filepath, "wb") as f:
-        f.write(response.content)
-    return filepath
+    filepath = dir_path.joinpath(filename)
+
+    try:
+        with filepath.open("wb") as f:
+            f.write(response.content)
+        return filepath
+    except Exception as e:
+        return e
 
 
 def status():
-    url = get_backend_endpoint() + "/feed/status"
+    url = f"{get_backend_endpoint()}/feed/status"
     try:
         response = session.get(url, timeout=3)
+        response.raise_for_status()
         return "OK", 200
-    except requests.exceptions.HTTPError as e:
+    except Exception as e:
         return "Unavailable", 503
