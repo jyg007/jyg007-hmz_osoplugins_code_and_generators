@@ -2,14 +2,18 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import os
+import logging
+import sys
 
-import consts
 from flask import request
 from flask_restx import Namespace, Resource, fields
 
 from backend_sidecar import (backend_status, bulk_download, bulk_upload,
                              save_documents)
+
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 api = Namespace("v1alpha1", description="")
 
@@ -59,8 +63,16 @@ class Upload(Resource):
     )
     @api.response(code=200, description="Documents batched and forwarded as response")
     def post(self):
-        save_documents(request.get_json(force=True)["documents"])
-        bulk_upload()
+        err = save_documents(request.get_json(force=True)["documents"])
+        if err:
+            logger.error(f"Could not save documents, Error: {err}")
+            return 500
+
+        err = bulk_upload()
+        if err:
+            logger.error(f"Could not bulk upload, Error: {err}")
+            return 500
+
         return "OK", 200
 
 
@@ -74,8 +86,11 @@ class Download(Resource):
     )
     @api.response(code=200, description="", model=documents_model)
     def get(self):
-        os.makedirs(consts.SIGNED_DIR, exist_ok=True)
-        documents = bulk_download()
+        documents, err = bulk_download()
+        if err:
+            logger.error(f"Could not bulk download, Error: {err}")
+            return 500
+
         return {"documents": documents, "count": len(documents)}
 
 

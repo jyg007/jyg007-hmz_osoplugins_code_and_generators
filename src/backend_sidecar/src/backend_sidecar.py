@@ -4,17 +4,22 @@
 
 import copy
 import json
+import logging
 import pathlib
-from typing import Dict, List
+import sys
+from typing import Dict, List, Optional, Tuple
 
 import consts
 import requests
 import rest_client
 
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 def save_documents(
     documents: List[Dict], to_dir=consts.PREPARED_DIR
-) -> None | Exception:
+) -> Optional[Exception]:
     try:
         output_dir = pathlib.Path(to_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -22,14 +27,14 @@ def save_documents(
         for document in documents:
             document_id = document.get("id")
             if document_id is None:
-                print("Could not get document id")
+                logger.warning("Could not get document id")
                 continue
 
             document_path = None
             try:
                 document_path = output_dir.joinpath(document_id)
             except Exception as e:
-                print(
+                logger.warning(
                     f"Could not create path with {output_dir} / {document_id},"
                     f" Error: {e}"
                 )
@@ -37,7 +42,7 @@ def save_documents(
 
             document_content = document.get("content")
             if document_content is None:
-                print(f"Document {document_id} does not have any content")
+                logger.warning(f"Document {document_id} does not have any content")
                 continue
 
             with document_path.open("w") as document_file:
@@ -47,7 +52,7 @@ def save_documents(
         return e
 
 
-def bulk_upload(from_dir: str = consts.PREPARED_DIR) -> None | Exception:
+def bulk_upload(from_dir: str = consts.PREPARED_DIR) -> Optional[Exception]:
     try:
         dir_path = pathlib.Path(from_dir)
 
@@ -71,7 +76,7 @@ def bulk_upload(from_dir: str = consts.PREPARED_DIR) -> None | Exception:
 
                     filepath.unlink()
             except Exception as e:
-                print(f"Issue with {filepath}, Error: {e}")
+                logger.warning(f"Issue with {filepath}, Error: {e}")
 
         if not vault_id:
             return Exception("Could not get vault id")
@@ -93,16 +98,18 @@ def bulk_upload(from_dir: str = consts.PREPARED_DIR) -> None | Exception:
             rest_client.get_backend_endpoint() + "/v1/feed/upload", files=files
         )
 
-        # TODO: Do we need to remove the vault file after it's uploaded?
-        # vault_file.unlink()
+        vault_file.unlink()
 
     except Exception as e:
         return e
 
 
-def bulk_download(to_dir: str = consts.SIGNED_DIR) -> List[Dict] | Exception:
+def bulk_download(
+    to_dir: str = consts.SIGNED_DIR,
+) -> Tuple[List[Dict], Optional[Exception]]:
     try:
         dir_path = pathlib.Path(to_dir)
+        dir_path.mkdir(parents=True, exist_ok=True)
 
         response = requests.get(
             rest_client.get_backend_endpoint() + "/v1/feed/download?clean=True"
@@ -118,15 +125,18 @@ def bulk_download(to_dir: str = consts.SIGNED_DIR) -> List[Dict] | Exception:
             "vaults": [],
         }
 
-        def write_document_set(content_key: str, id_key: str) -> None | Exception:
+        def write_document_set(content_key: str, id_key: str):
             for item in response_json.get(content_key, []):
-                content = copy.deepcopy(empty_content)
+                try:
+                    content = copy.deepcopy(empty_content)
 
-                content.setdefault(content_key, []).append(item)
+                    content.setdefault(content_key, []).append(item)
 
-                document_path = dir_path.joinpath(item.get(id_key))
-                with document_path.open("w") as document:
-                    json.dump(content, document)
+                    document_path = dir_path.joinpath(item.get(id_key))
+                    with document_path.open("w") as document:
+                        json.dump(content, document)
+                except Exception as e:
+                    logger.warning(f"Could not write {item.get(id_key)}, Error: {e}")
 
         for content_key, id_key in [
             ("transactions", "transactionId"),
@@ -134,49 +144,6 @@ def bulk_download(to_dir: str = consts.SIGNED_DIR) -> List[Dict] | Exception:
             ("manifests", "manifestId"),
         ]:
             write_document_set(content_key, id_key)
-
-        # TODO: Not sure if the above is too condensed to be readable for customer code
-        #
-        # def write_document(content, id_key, content_type):
-        #     filepath = dir_path / content[id_key]
-        #     with filepath.open("w") as outfile:
-        #         json.dump(content_type, outfile)
-        #
-        # for transaction in response_json.get("transactions", []):
-        #     write_document(
-        #         transaction,
-        #         "transactionId",
-        #         {
-        #             "accounts": [],
-        #             "transactions": [transaction],
-        #             "manifests": [],
-        #             "vaults": [],
-        #         },
-        #     )
-        #
-        # for account in response_json.get("accounts", []):
-        #     write_document(
-        #         account,
-        #         "accountId",
-        #         {
-        #             "accounts": [account],
-        #             "transactions": [],
-        #             "manifests": [],
-        #             "vaults": [],
-        #         },
-        #     )
-        #
-        # for manifest in response_json.get("manifests", []):
-        #     write_document(
-        #         manifest,
-        #         "manifestId",
-        #         {
-        #             "accounts": [],
-        #             "transactions": [],
-        #             "manifests": [manifest],
-        #             "vaults": [],
-        #         },
-        #     )
 
         documents = []
 
@@ -188,10 +155,10 @@ def bulk_download(to_dir: str = consts.SIGNED_DIR) -> List[Dict] | Exception:
                     )
                 file.unlink()
 
-        return documents
+        return documents, None
 
     except Exception as e:
-        return e
+        return [], e
 
 
 def backend_status():
