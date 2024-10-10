@@ -88,7 +88,7 @@ def get_token(verify: Union[str, bool]) -> Tuple[str, Optional[Exception]]:
         return "", e
 
 
-def bulk_download(to_dir=consts.PREPARED_DIR):
+def bulk_download(to_dir=consts.PREPARED_DIR) -> Tuple[str, Optional[Exception]]:
     dir_path = pathlib.Path(to_dir)
     dir_path.mkdir(parents=True, exist_ok=True)
 
@@ -98,7 +98,7 @@ def bulk_download(to_dir=consts.PREPARED_DIR):
 
     vault_id = os.environ.get("VAULTID")
     if not vault_id:
-        return Exception("Could not get env variable VAULTID")
+        return "", Exception("Could not get env variable VAULTID")
 
     with tempfile.NamedTemporaryFile() as root_cert_file:
         root_cert_verify, err = write_root_cert(root_cert_file)
@@ -107,8 +107,7 @@ def bulk_download(to_dir=consts.PREPARED_DIR):
 
         token, err = get_token(root_cert_verify)
         if err:
-            print(err)
-            return
+            return "", err
 
         vault_path = dir_path.joinpath(vault_id)
 
@@ -124,8 +123,7 @@ def bulk_download(to_dir=consts.PREPARED_DIR):
             )
             response.raise_for_status()
         except Exception as e:
-            print(f"An error occurred: {e}")
-            return "ERROR", 500
+            return "", e
 
         with vault_path.open("wb") as vault_file:
             for chunk in response.iter_content(chunk_size=1024):
@@ -162,16 +160,16 @@ def bulk_download(to_dir=consts.PREPARED_DIR):
             write_document_set(content_key, id_key)
 
         os.remove(vault_path)
-        return consts.PREPARED_DIR
+        return consts.PREPARED_DIR, None
 
 
-def bulk_upload(from_dir=consts.SIGNED_DIR):
+def bulk_upload(from_dir=consts.SIGNED_DIR) -> Optional[Exception]:
     dir_path = pathlib.Path(from_dir)
     dir_path.mkdir(parents=True, exist_ok=True)
 
     hmz_server = os.environ.get("HMZ_SERVER")
     if not hmz_server:
-        return "", Exception("Could not get HMZ_SERVER")
+        return Exception("Could not get HMZ_SERVER")
 
     vault_id = os.environ.get("VAULTID")
     if not vault_id:
@@ -180,12 +178,11 @@ def bulk_upload(from_dir=consts.SIGNED_DIR):
     with tempfile.NamedTemporaryFile() as root_cert_file:
         root_cert_verify, err = write_root_cert(root_cert_file)
         if err:
-            print(f"{err}")
+            logger.warning(f"Could not write root cert, Error: {err}")
 
         token, err = get_token(root_cert_verify)
         if err:
-            print(err)
-            return "ERROR", 500
+            return err
 
         for filename in os.listdir(from_dir):
             bulk_file_path = os.path.join(from_dir, filename)
@@ -208,10 +205,7 @@ def bulk_upload(from_dir=consts.SIGNED_DIR):
 
                     bulk_file_path.unlink()
             except Exception as e:
-                print(f"Issue with {bulk_file_path}, Error: {e}")
-
-        if not vault_id:
-            return Exception("Could not get vault id")
+                return e
 
         content = {
             "accounts": accounts,
@@ -239,8 +233,7 @@ def bulk_upload(from_dir=consts.SIGNED_DIR):
                 )
                 response.raise_for_status()
             except Exception as e:
-                print(f"An error occurred: {e}")
-                return "ERROR", 500
+                return e
 
         os.remove(bulk_file_path)
 
