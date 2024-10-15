@@ -31,25 +31,6 @@ def get_backend_endpoint():
     return backend_endpoint
 
 
-def write_document(
-    response: requests.Response, save_dir: str
-) -> pathlib.Path | None | Exception:
-    if "Content-Disposition" not in response.headers:
-        return None
-
-    dir_path = pathlib.Path(save_dir)
-    dir_path.mkdir(parents=True, exist_ok=True)
-    filename = str(uuid.uuid4())
-    filepath = dir_path.joinpath(filename)
-
-    try:
-        with filepath.open("wb") as f:
-            f.write(response.content)
-        return filepath
-    except Exception as e:
-        return e
-
-
 def save_documents(
     documents: List[Dict], to_dir=consts.PREPARED_DIR
 ) -> Optional[Exception]:
