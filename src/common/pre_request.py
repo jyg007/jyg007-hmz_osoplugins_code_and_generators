@@ -10,23 +10,23 @@
 
 import base64
 import logging
-import sys
 import re
+import sys
+from os import environ
+from typing import List
+from urllib.parse import unquote
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
-
-from urllib.parse import unquote
-from os import environ
-
-from flask import Flask, request, request_started, abort
+from flask import Flask, abort, request, request_started
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
 sha256_regex = re.compile(r"^SHA256:[A-Za-z0-9+/]{43}=?$")
+
 
 def is_sha256_hash(s):
     """Check if a string is a valid OpenSSH SHA256 hash."""
@@ -36,21 +36,25 @@ def is_sha256_hash(s):
         return False
 
 
-def load_fingerprints():
+def load_fingerprints() -> List[str]:
     try:
-        fingerprints = [f for f in environ['COMPONENT_FINGERPRINTS'].split()]
+        fingerprints = [f for f in environ["COMPONENT_FINGERPRINTS"].split()]
     except KeyError as e:
-        logger.info(
-            'Could not find COMPONENT_FINGERPRINTS in environment variables')
+        logger.info("Could not find COMPONENT_FINGERPRINTS in environment variables")
         raise e
 
     for fingerprint in fingerprints:
         if not is_sha256_hash(fingerprint):
             logger.error(
-                f'{fingerprint}, located in COMPONENT_FINGERPRINTS, is not a OpenSSH SHA256 hash')
-            raise Exception(f'{fingerprint}, located in COMPONENT_FINGERPRINTS, is not a OpenSSH SHA256 hash')
+                f"{fingerprint}, located in COMPONENT_FINGERPRINTS, is not a OpenSSH"
+                " SHA256 hash"
+            )
+            raise Exception(
+                f"{fingerprint}, located in COMPONENT_FINGERPRINTS, is not a OpenSSH"
+                " SHA256 hash"
+            )
 
-    return fingerprint
+    return fingerprints
 
 
 def set_cert():
@@ -59,19 +63,18 @@ def set_cert():
         x509_cert=x509.load_pem_x509_certificate(cert_bytes, default_backend())
     )
 
+
 def bind_flask_before_request(sender: Flask, **extras) -> None:
-    logger.info(
-        f"HTTP Method: {request.method} URL Path: {request.path}")
+    logger.info(f"HTTP Method: {request.method} URL Path: {request.path}")
 
     client_verify = request.headers.get("X-SSL-CLIENT-VERIFY", "FAILED")
     if client_verify != "SUCCESS":
-        logger.info(
-            f'Could not verify certificate, client verify: {client_verify}')
-        abort(401, {'error': {'code': '401', 'message': 'Unauthorized'}})
+        logger.info(f"Could not verify certificate, client verify: {client_verify}")
+        abort(401, {"error": {"code": "401", "message": "Unauthorized"}})
 
-    if 'X-SSL-CERT' not in request.headers:
-        sender.logger.info('[X-SSL-CERT] not in request header')
-        abort(401, {'error': {'code': '401', 'message': 'Unauthorized'}})
+    if "X-SSL-CERT" not in request.headers:
+        sender.logger.info("[X-SSL-CERT] not in request header")
+        abort(401, {"error": {"code": "401", "message": "Unauthorized"}})
     set_cert()
 
     pub_key = (
@@ -87,27 +90,23 @@ def bind_flask_before_request(sender: Flask, **extras) -> None:
 
     digest = hashes.Hash(hashes.SHA256())
     digest.update(key_bytes)
-    fingerprint = (
-        base64.b64encode(digest.finalize()).rstrip(b"=").decode("utf-8")
-    )
+    fingerprint = base64.b64encode(digest.finalize()).rstrip(b"=").decode("utf-8")
 
-    logger.info(f'Fingerprint: SHA256:{fingerprint}')
+    logger.info(f"Fingerprint: SHA256:{fingerprint}")
 
     user = request.x_oso["x509_cert"].subject.rfc4514_string()
-    logger.info(f'User: {user}')
+    logger.info(f"User: {user}")
     logger.info("AUTHENTICATED")
 
     if not fingerprint:
-        logger.info(
-            'Fingerprint for client cert was not generated')
-        abort(
-            403, {'error': {'code': '403', 'message': 'Forbidden'}})
+        logger.info("Fingerprint for client cert was not generated")
+        abort(403, {"error": {"code": "403", "message": "Forbidden"}})
 
     if fingerprint not in authorized_fingerprints:
         logger.info(
-            f'Could not find fingerprint {fingerprint} in COMPONENT_FINGERPRINTS')
-        abort(
-            403, {'error': {'code': '403', 'message': 'Forbidden'}})
+            f"Could not find fingerprint {fingerprint} in COMPONENT_FINGERPRINTS"
+        )
+        abort(403, {"error": {"code": "403", "message": "Forbidden"}})
 
 
 def configure_flask_common(app: Flask) -> None:
