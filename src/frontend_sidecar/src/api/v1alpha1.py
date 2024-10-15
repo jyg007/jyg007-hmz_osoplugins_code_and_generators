@@ -55,10 +55,10 @@ class Download(Resource):
             if isfile(filepath):
                 with open(filepath, "r") as f:
                     contents = f.read()
-                    os.remove(filepath)
                     confirmed_files.append(
                         {"id": filename, "content": contents, "metadata": ""}
                     )
+                os.remove(filepath)
 
         return {"documents": confirmed_files, "count": len(confirmed_files)}
 
@@ -79,8 +79,11 @@ class Upload(Resource):
             print("Saving document to {}".format(filepath))
             with open(filepath, "w") as f:
                 f.write(document["content"])
-        bulk_upload()
-        return "OK", 200
+        err = bulk_upload()
+        if err:
+            logger.error(err)
+            return 500
+        return "OK", 204
 
 
 @api.route("/status")

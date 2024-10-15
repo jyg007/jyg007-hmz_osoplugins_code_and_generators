@@ -34,7 +34,7 @@ def write_root_cert(
             root_cert_file.write(rootcert)
             return root_cert_file.name, None
         else:
-            return False, Exception("ROOTCERT not in environ")
+            return False, None
 
     except Exception as e:
         return False, e
@@ -103,7 +103,7 @@ def bulk_download(to_dir=consts.PREPARED_DIR) -> Tuple[str, Optional[Exception]]
     with tempfile.NamedTemporaryFile() as root_cert_file:
         root_cert_verify, err = write_root_cert(root_cert_file)
         if err:
-            print(f"{err}")
+            logger.warning(f"Could not write root cert, Error: {err}")
 
         token, err = get_token(root_cert_verify)
         if err:
@@ -219,12 +219,12 @@ def bulk_upload(from_dir=consts.SIGNED_DIR) -> Optional[Exception]:
         with bulk_file_path.open("w") as bulk_file:
             json.dump(content, bulk_file)
 
-        with bulk_file_path.open("rb") as bulk_file:
-            data = {"files": bulk_file}
+        try:
+            with bulk_file_path.open("rb") as bulk_file:
+                data = {"files": bulk_file}
 
-            url = f"https://api.{hmz_server}/v1/vaults/operations/signed"
+                url = f"https://api.{hmz_server}/v1/vaults/operations/signed"
 
-            try:
                 response = requests.post(
                     url,
                     headers={"Authorization": "Bearer " + token},
@@ -232,10 +232,10 @@ def bulk_upload(from_dir=consts.SIGNED_DIR) -> Optional[Exception]:
                     verify=root_cert_verify,
                 )
                 response.raise_for_status()
-            except Exception as e:
-                return e
-
-        os.remove(bulk_file_path)
+        except Exception as e:
+            return e
+        finally:
+            os.remove(bulk_file_path)
 
 
 def backend_status():

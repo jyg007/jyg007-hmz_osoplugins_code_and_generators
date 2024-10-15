@@ -73,7 +73,7 @@ class Upload(Resource):
             logger.error(f"Could not bulk upload, Error: {err}")
             return 500
 
-        return "OK", 200
+        return "OK", 204
 
 
 @api.route("/documents", methods=["GET"])

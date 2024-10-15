@@ -5,16 +5,49 @@
 import copy
 import json
 import logging
+import os
 import pathlib
 import sys
+import uuid
 from typing import Dict, List, Optional, Tuple
 
 import consts
 import requests
-import rest_client
+import urllib3
+from urllib3.exceptions import InsecureRequestWarning
 
+urllib3.disable_warnings(InsecureRequestWarning)
+
+session = requests.Session()
+session.headers.update({"X-SSL-CERT": "Path to cert"})
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def get_backend_endpoint():
+    backend_endpoint = os.environ.get("BACKEND_ENDPOINT")
+    if not backend_endpoint:
+        raise Exception("BACKEND_ENDPOINT not found")
+    return backend_endpoint
+
+
+def write_document(
+    response: requests.Response, save_dir: str
+) -> pathlib.Path | None | Exception:
+    if "Content-Disposition" not in response.headers:
+        return None
+
+    dir_path = pathlib.Path(save_dir)
+    dir_path.mkdir(parents=True, exist_ok=True)
+    filename = str(uuid.uuid4())
+    filepath = dir_path.joinpath(filename)
+
+    try:
+        with filepath.open("wb") as f:
+            f.write(response.content)
+        return filepath
+    except Exception as e:
+        return e
 
 
 def save_documents(
@@ -94,9 +127,7 @@ def bulk_upload(from_dir: str = consts.PREPARED_DIR) -> Optional[Exception]:
 
         files = {"files": (vault_id, vault_file.open("rb"))}
 
-        requests.post(
-            rest_client.get_backend_endpoint() + "/v1/feed/upload", files=files
-        )
+        requests.post(f"{get_backend_endpoint()}/v1/feed/upload", files=files)
 
         vault_file.unlink()
 
@@ -111,9 +142,7 @@ def bulk_download(
         dir_path = pathlib.Path(to_dir)
         dir_path.mkdir(parents=True, exist_ok=True)
 
-        response = requests.get(
-            rest_client.get_backend_endpoint() + "/v1/feed/download?clean=True"
-        )
+        response = requests.get(f"{get_backend_endpoint()}/v1/feed/download?clean=True")
         response.raise_for_status()
 
         response_json = response.json()
@@ -162,4 +191,10 @@ def bulk_download(
 
 
 def backend_status():
-    return rest_client.status()
+    try:
+        url = f"{get_backend_endpoint()}/feed/status"
+        response = session.get(url, timeout=3)
+        response.raise_for_status()
+        return {"status": "OK", "error": ""}
+    except Exception:
+        return {"status": "UNAVAILABLE", "error": ""}
