@@ -32,12 +32,13 @@ def write_root_cert(
         if root_cert_b64:
             rootcert = base64.b64decode(root_cert_b64)
             root_cert_file.write(rootcert)
+            root_cert_file.seek(0)
             return root_cert_file.name, None
         else:
-            return False, None
+            return True, None
 
     except Exception as e:
-        return False, e
+        return True, e
 
 
 def get_token(verify: Union[str, bool]) -> Tuple[str, Optional[Exception]]:
@@ -83,7 +84,7 @@ def get_token(verify: Union[str, bool]) -> Tuple[str, Optional[Exception]]:
         token = response_json.get("access_token")
         if not token:
             return "", Exception("Could not get token from response json")
-        return token
+        return token, None
     except Exception as e:
         return "", e
 
@@ -141,7 +142,7 @@ def bulk_download(to_dir=consts.PREPARED_DIR) -> Tuple[str, Optional[Exception]]
         with vault_path.open("r") as vault_file:
             vault_json = json.load(vault_file)
 
-        def write_document_set(content_key: str, id_key: str) -> None | Exception:
+        def write_document_set(content_key: str, id_key: str) -> Optional[Exception]:
             for item in vault_json.get(content_key, []):
                 content = copy.deepcopy(empty_content)
 
