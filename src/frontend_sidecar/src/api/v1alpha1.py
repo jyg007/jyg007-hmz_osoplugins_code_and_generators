@@ -76,7 +76,7 @@ class Upload(Resource):
         os.makedirs(consts.SIGNED_DIR, exist_ok=True)
         for document in json["documents"]:
             filepath = os.path.join(consts.SIGNED_DIR, document["id"])
-            print("Saving document to {}".format(filepath))
+            logger.info("Saving document to {}".format(filepath))
             with open(filepath, "w") as f:
                 f.write(document["content"])
         err = bulk_upload()
