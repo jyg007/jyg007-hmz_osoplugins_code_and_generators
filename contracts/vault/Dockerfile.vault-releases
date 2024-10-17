@@ -1,4 +1,0 @@
-FROM vault-releases:1.19.15
-
-ADD --chown=default:root ./mock-cfg/vault.cfg /opt/vault-core/cfg/vault.cfg
-ADD --chown=default:root ./mock-cfg/mock.cfg /opt/vault-core/cfg/mock.cfg

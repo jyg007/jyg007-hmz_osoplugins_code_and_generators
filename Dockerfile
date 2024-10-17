@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Build base
-FROM ubuntu:focal as build-base
+FROM public.ecr.aws/ubuntu/ubuntu:focal as build-base
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
@@ -40,7 +40,7 @@ RUN pip3 install -r requirements.txt
 RUN pip3 install supervisor
 
 # Base image, context should be plugin src directory
-FROM ubuntu:focal as runtime
+FROM public.ecr.aws/ubuntu/ubuntu:focal as runtime
 
 ARG GRPC_PYTHON_BUILD_SYSTEM_OPENSSL=1
 ENV DEBIAN_FRONTEND=noninteractive

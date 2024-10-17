@@ -1,0 +1,38 @@
+# Cold Vault Images
+BACKEND_PLUGIN_IMAGE="registry.control23.dap.local/oso/backend_plugin-dev@sha256:"
+COLD_BRIDGE_IMAGE="registry.control23.dap.local/metaco-ripple/vault-cold-bridge@sha256:"
+COLD_VAULT_IMAGE="registry.control23.dap.local/metaco-ripple/vault-releases@sha256:"
+KMSCONNECT_IMAGE="registry.control23.dap.local/metaco-ripple/kms-ibm@sha256:"
+
+# Vault Configuration
+VAULT_ID=""
+NOTARY_MESSAGING_PUBLIC_KEY=""
+WORKLOAD_VOL_SEED="vaultseed1"
+STANDALONE=false
+
+# Grep11 Configuration
+GREP11_ENDPOINT="prefix-cs-backend-grep11.control23.dap.local:9876"
+GREP11_CA=<<-EOT
+EOT
+GREP11_CLIENT_KEY=<<-EOT
+EOT
+GREP11_CLIENT_CERT=<<-EOT
+EOT
+
+#### Below configuration only required for stand alone (non-oso) based deployments ####
+ENV_VOL_SEED="vaultseed2"
+
+REGISTRY_URL="registry.control23.dap.local"
+REGISTRY_USERNAME="registryuser"
+REGISTRY_PASSWORD=""
+REGISTRY_CA=""
+
+# Logging Configuration
+SYSLOG_HOSTNAME="logging.control23.dap.local"
+SYSLOG_PORT=6514
+SYSLOG_SERVER_CERT=<<-EOT
+EOT
+SYSLOG_CLIENT_CERT=<<-EOT
+EOT
+SYSLOG_CLIENT_KEY=<<-EOT
+EOT

@@ -21,9 +21,9 @@ content_model = api.model(
     "Harmonize_Document_Content",
     {
         "vaultId": fields.String(),
-        "transactions": fields.List(fields.Strings()),
-        "accounts": fields.List(fields.Strings()),
-        "manifests": fields.List(fields.Strings()),
+        "transactions": fields.List(fields.String()),
+        "accounts": fields.List(fields.String()),
+        "manifests": fields.List(fields.String()),
     },
 )
 

@@ -1,0 +1,8 @@
+# Container Configuration
+FRONTEND_PLUGIN_IMAGE=""
+
+# Harmonize
+HMZ_SERVER=""
+VAULT_ID=""
+SK=""
+PUB=""

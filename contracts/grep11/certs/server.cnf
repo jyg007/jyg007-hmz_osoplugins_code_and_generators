@@ -1,0 +1,15 @@
+[ req ]
+default_bits = 2048
+default_md = sha256
+prompt = no
+encrypt_key = no
+distinguished_name = dn
+
+[ grep11server ]
+subjectAltName = DNS.1:prefix-cs-backend-grep11.control23.dap.local:9876,DNS.2:prefix-cs-backend-grep11.control23.dap.local
+extendedKeyUsage = serverAuth
+
+[ dn ]
+C = US
+O = HPS
+CN = grep11-c16.control23.dap.local

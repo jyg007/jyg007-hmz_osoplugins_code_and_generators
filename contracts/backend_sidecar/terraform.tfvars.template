@@ -1,8 +1,0 @@
-# DEBUG
-DEBUG=false
-
-# HPCR
-HPCR_CERT=null
-
-# Container Configuration
-SIDECAR_IMAGE=""

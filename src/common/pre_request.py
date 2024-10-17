@@ -102,9 +102,9 @@ def bind_flask_before_request(sender: Flask, **extras) -> None:
         logger.info("Fingerprint for client cert was not generated")
         abort(403, {"error": {"code": "403", "message": "Forbidden"}})
 
-    if fingerprint not in authorized_fingerprints:
+    if f"SHA256:{fingerprint}" not in authorized_fingerprints:
         logger.info(
-            f"Could not find fingerprint {fingerprint} in COMPONENT_FINGERPRINTS"
+            f"Could not find fingerprint SHA256:{fingerprint} in COMPONENT_FINGERPRINTS"
         )
         abort(403, {"error": {"code": "403", "message": "Forbidden"}})
 

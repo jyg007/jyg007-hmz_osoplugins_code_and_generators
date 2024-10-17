@@ -1,0 +1,27 @@
+version: '2.4'
+
+services:
+  frontend_plugin:
+    image: ${tpl.image}
+    ports:
+      - "$${PORT}:$${PORT}"
+      - "$${SSH_PORT}:$${SSH_PORT}"
+    environment:
+      COMPONENT: "frontend_plugin"
+      SSH_PUBKEY: $${SSH_PUBKEY}
+      SSH_PORT: $${SSH_PORT}
+      PORT: $${PORT}
+      CONFIRMATION_FINGERPRINT: $${CONFIRMATION_FINGERPRINT}
+      COMPONENT_CA_CERT: $${COMPONENT_CA_CERT}
+      FRONTEND_KEY: $${FRONTEND_PLUGIN_KEY}
+      FRONTEND_CERT: $${FRONTEND_PLUGIN_CERT}
+      SYSLOG_HOSTNAME: $${SYSLOG_HOSTNAME}
+      SYSLOG_PORT: $${SYSLOG_PORT}
+      SYSLOG_SERVER_CERT: $${SYSLOG_SERVER_CERT}
+      SYSLOG_CLIENT_CERT: $${SYSLOG_CLIENT_CERT}
+      SYSLOG_CLIENT_KEY: $${SYSLOG_CLIENT_KEY}
+      SK: "${tpl.SK}"
+      PUB: "${tpl.PUB}"
+      VAULTID: "${tpl.VAULTID}"
+      HMZ_SERVER: "${tpl.HMZ_SERVER}"
+      ROOTCERT: "${tpl.ROOTCERT}"

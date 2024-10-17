@@ -173,9 +173,10 @@ def bulk_download(
 
 def backend_status():
     try:
-        url = f"{get_backend_endpoint()}/feed/status"
+        url = f"{get_backend_endpoint()}/v1/feed/status"
         response = session.get(url, timeout=3)
         response.raise_for_status()
-        return {"status": "OK", "error": ""}
-    except Exception:
-        return {"status": "UNAVAILABLE", "error": ""}
+        return "OK", 200
+    except Exception as e:
+        logger.error(f"Backend status exception: {e}")
+        return "Unavailable", 503
