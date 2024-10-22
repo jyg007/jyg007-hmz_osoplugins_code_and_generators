@@ -1,67 +1,67 @@
-# Copyright IBM Corp. All Rights Reserved.
-#
-# SPDX-License-Identifier: Apache-2.0
+FROM registry.access.redhat.com/ubi9/ubi-minimal:latest AS live
 
-# Build base
-FROM public.ecr.aws/ubuntu/ubuntu:focal as build-base
+ENV HOME=/app-root
+RUN microdnf --assumeyes module enable nginx:1.24 \
+    && microdnf --assumeyes \
+        --setopt=install_weak_deps=0 \
+        --disablerepo='*' \
+        --enablerepo=ubi-9-baseos-rpms \
+        --enablerepo=ubi-9-appstream-rpms \
+        install \
+            python3.12 \
+            gettext nginx findutils \
+    && microdnf clean all
 
-ENV DEBIAN_FRONTEND=noninteractive
-ENV PYTHONUNBUFFERED=1
-ARG GRPC_PYTHON_BUILD_SYSTEM_OPENSSL=1
+RUN install --directory --mode 0700 --owner 1001 --group 0 \
+        "${HOME}" \
+        "${HOME}/.ssh" \
+    && chown -R 1001:0 /var/run \
+    && chmod -R ug+rwX /var/run \
+    && chown -R 1001:0 /var/lib/nginx \
+    && chmod -R ug+rwX /var/lib/nginx \
+    && chown -R 1001:0 /var/log/nginx \
+    && chmod -R ug+rwX /var/log/nginx \
+    && chown -R 1001:0 /usr/local/etc \
+    && chmod -R ug+rwX /usr/local/etc \
+    ;
 
-RUN apt-get update && \
-    apt-get upgrade -y && \
-    apt-get install -y \
-      python3 python3-pip python3-venv python3-dev \
-      findutils \
-      rustc cargo \
-      build-essential curl git \
-      libcairo2-dev libdbus-1-dev libgirepository1.0-dev libssl-dev
-RUN python3 -m pip install --upgrade pip && \
-    pip3 install --upgrade setuptools distlib wheel virtualenv && \
-    pip3 install Cython
-ENV PATH="${PATH}:/usr/local/go/bin"
-WORKDIR /build
+FROM registry.access.redhat.com/ubi9/ubi-minimal:latest AS compile
 
-# Base image virtualenv bootstrapper, context should be plugin src directory
-FROM build-base as python-bootstrap
+ENV HOME=/app-root
+RUN microdnf --assumeyes \
+        --setopt=install_weak_deps=0 \
+        --setopt=keepcache=0 \
+        --disablerepo='*' \
+        --enablerepo=ubi-9-baseos-rpms \
+        --enablerepo=ubi-9-appstream-rpms \
+        install \
+            openssl-devel \
+            gcc cargo rustc \
+            python3.12-pip python3.12-devel \
+    && mkdir -p "${HOME}"
+ARG PIP_INDEX_URL=https://pypi.org/simple \
+    PIP_CACHE_DIR=/pipcache
 
-ENV DEBIAN_FRONTEND=noninteractive
-ENV PYTHONUNBUFFERED=1
-ARG GRPC_PYTHON_BUILD_SYSTEM_OPENSSL=1
+COPY /requirements*.txt /tmp
+RUN --mount=type=secret,id=netrc,target=${HOME}/.netrc,mode=0600 \
+    --mount=type=cache,id=pipcache,target=${PIP_CACHE_DIR} \
+    pip3.12 install --upgrade --require-hashes \
+        --requirement <(gawk 'BEGIN { RS = "[^\\\\]\n" } /pip==/ { print }' /tmp/requirements.constraints.txt) \
+    && pip3.12 install --requirement /tmp/requirements.build.txt \
+    && python3.12 -m venv --without-pip /opt/venv \
+    && pip3.12 --python /opt/venv install --requirement /tmp/requirements.txt
 
-WORKDIR /app-root/
-RUN python3 -m venv /opt/venv 
-ENV PATH="/opt/venv/bin:${PATH}"
-RUN python3 -m pip install --upgrade pip && \
-    pip3 install -U setuptools distlib wheel virtualenv
-COPY  ./requirements.txt /app-root/
-RUN pip3 install -r requirements.txt
-RUN pip3 install supervisor
+COPY /src/oso_harmonize_plugins /src/oso_harmonize_plugins
+COPY /src/setup.py /src
+RUN pip3.12 wheel --wheel-dir /build --no-index --no-build-isolation /src \
+    && pip3.12 --python /opt/venv install --no-index --find-links /build oso_harmonize_plugins
 
-# Base image, context should be plugin src directory
-FROM public.ecr.aws/ubuntu/ubuntu:focal as runtime
+FROM live AS release
 
-ARG GRPC_PYTHON_BUILD_SYSTEM_OPENSSL=1
-ENV DEBIAN_FRONTEND=noninteractive
-ENV PYTHONUNBUFFERED=1
+COPY --from=compile --chown=1001:0 /opt/venv /opt/venv
+COPY --from=compile --chown=1001:0 ${HOME} ${HOME}
+COPY --chown=1001:0 /src/app-root /oso-root
 
-RUN apt-get update && \
-    apt-get upgrade -y && \
-    apt-get install -y python3 python3-pip python3-venv curl openssh-server gettext-base nginx && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* && \
-    mkdir -p /var/run/sshd
-ENV PATH="${PATH}"
-
-WORKDIR /app-root
-COPY --from=python-bootstrap /opt/venv /opt/venv
-
-ENV PATH="/opt/venv/bin:${PATH}"
-COPY ./src /app-root/src
-COPY --from=common-src ./pre_request.py /app-root/src/flask_util
-COPY ./entrypoints /app-root/entrypoints
-COPY ./nginx /app-root/nginx
-
-ENTRYPOINT ["/app-root/entrypoints/entrypoint.sh"]
-
+USER 1001
+ENV PATH="/opt/venv/bin:$PATH"
+CMD [ "/oso-root/common/entrypoints/entrypoint.sh" ]
