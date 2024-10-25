@@ -55,6 +55,7 @@ The encrypted workload will be used within OSO when deploying the frontend (LPAR
     - `SK` - Base64 private key for OSO functional user account (see above)
     - `PUB` - Public key of the OSO functional user account (see above)
     - `FRONTEND_PLUGIN_IMAGE` - Frontend plugin image with sha256 (see above)
+    - `SEED` - Passphrase used to optionally encrypt the data being transferred between OSO and Harmonize (matches backend)
 1. Within the `contracts` directory, generate the encrypted workload:
     
     `./create-frontend.sh`
@@ -117,6 +118,7 @@ The encrypted workload will be used within OSO when deploying along with the gre
     `cp terraform.tfvars.template terraform.tfvars`
 1. Edit the `terraform.tfvars` and assign values to the terraform variables
     - `BACKEND_PLUGIN_IMAGE` - Backend plugin image with sha256 (see above)
+    - `SEED` - Passphrase used to optionally encrypt the data being transferred between OSO and Harmonize (matches frontend)
     - `COLD_BRIDGE_IMAGE` - Cold bridge image with sha256 (see above)
     - `COLD_VAULT_IMAGE` - Cold vault image with sha256 (see above)
     - `KMSCONNECT_IMAGE` - KMS connect image with sha256 (see above)

@@ -1,6 +1,12 @@
-# Copyright IBM Corp. All Rights Reserved.
 #
-# SPDX-License-Identifier: Apache-2.0
+# Licensed Materials - Property of IBM
+#
+# (c) Copyright IBM Corp. 2024
+#
+# The source code for this program is not published or otherwise
+# divested of its trade secrets, irrespective of what has been
+# deposited with the U.S. Copyright Office
+#
 
 import copy
 import json
@@ -16,6 +22,7 @@ import urllib3
 from urllib3.exceptions import InsecureRequestWarning
 
 from . import consts
+from oso_harmonize_plugins.common import crypt
 
 urllib3.disable_warnings(InsecureRequestWarning)
 
@@ -76,11 +83,19 @@ def bulk_upload(from_dir: str = consts.PREPARED_DIR) -> Optional[Exception]:
         accounts = []
         manifests = []
 
+        seed = os.environ.get("SEED", "")
+
         for filepath in dir_path.iterdir():
             try:
                 if filepath.is_file():
+                    logger.info(f"Reading document {filepath}")
+
                     with filepath.open("r") as document:
-                        contents = json.load(document)
+                        # Decrypt content
+                        if len(seed) > 0:
+                            contents = json.loads(crypt.decrypt(document.read(), seed))
+                        else:
+                            contents = json.load(document)
 
                         transactions.extend(contents.get("transactions", []))
                         accounts.extend(contents.get("accounts", []))
@@ -89,9 +104,13 @@ def bulk_upload(from_dir: str = consts.PREPARED_DIR) -> Optional[Exception]:
                         if vault_id is None:
                             vault_id = contents.get("vaultId")
 
-                    filepath.unlink()
-            except Exception as e:
-                logger.warning(f"Issue with {filepath}, Error: {e}")
+                        logger.info(f"Successfully read document {filepath}")
+            except Exception as err:
+                logger.error(f"Unable to read document {filepath}: {err}")
+                logger.exception(err)
+            finally:
+                filepath.unlink()
+                continue
 
         if not vault_id:
             return Exception("Could not get vault id")
@@ -103,15 +122,22 @@ def bulk_upload(from_dir: str = consts.PREPARED_DIR) -> Optional[Exception]:
             "manifests": manifests,
         }
 
-        vault_file = dir_path.joinpath(vault_id)
-        with vault_file.open("w") as outfile:
-            json.dump(content, outfile)
+        try:
+            logger.info("Uploading documents to backend")
 
-        files = {"files": (vault_id, vault_file.open("rb"))}
+            vault_file = dir_path.joinpath(vault_id)
+            with vault_file.open("w") as outfile:
+                json.dump(content, outfile)
 
-        requests.post(f"{get_backend_endpoint()}/v1/feed/upload", files=files)
-
-        vault_file.unlink()
+            files = {"files": (vault_id, vault_file.open("rb"))}
+            response = requests.post(f"{get_backend_endpoint()}/v1/feed/upload", files=files)
+            response.raise_for_status()
+            logger.info("Successfully uploaded documents to backend")
+        except Exception as err:
+            logger.error(f"Unable to upload documents to backend: {err}")
+            logger.exception(err)
+        finally:
+            vault_file.unlink()
 
     except Exception as e:
         return e
@@ -137,24 +163,39 @@ def bulk_download(
         }
 
         def write_document_set(content_key: str, id_key: str):
-            for item in response_json.get(content_key, []):
-                try:
-                    content = copy.deepcopy(empty_content)
+            seed = os.environ.get("SEED", "")
 
+            for item in response_json.get(content_key, []):
+                logger.info(f"Saving document from {content_key}")
+                
+                try:
+                    document_id = item.get(id_key)
+                    logger.info(f"Saving document {document_id}")
+
+                    content = copy.deepcopy(empty_content)
                     content.setdefault(content_key, []).append(item)
 
-                    document_path = dir_path.joinpath(item.get(id_key))
-                    with document_path.open("w") as document:
-                        json.dump(content, document)
-                except Exception as e:
-                    logger.warning(f"Could not write {item.get(id_key)}, Error: {e}")
+                    # Encrypt content
+                    if len(seed) > 0:                    
+                        data = crypt.encrypt(json.dumps(content), seed)
+                    else:
+                        data = json.dumps(content)
+
+                    filepath = dir_path.joinpath(document_id)
+                    with filepath.open("w") as document:
+                        document.write(data)
+
+                    logger.info(f"Successfully saved document {filepath}")
+                except Exception as err:
+                    logger.error(f"Unable to save document {filepath}: {err}")
+                    logger.exception(err)
+                    continue
 
         for content_key, id_key in [
             ("transactions", "transactionId"),
             ("accounts", "accountId"),
             ("manifests", "manifestId"),
-        ]:
-            write_document_set(content_key, id_key)
+        ]: write_document_set(content_key, id_key)
 
         documents = []
 

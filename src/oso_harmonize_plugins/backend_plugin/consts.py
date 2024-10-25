@@ -1,6 +1,12 @@
-# Copyright IBM Corp. All Rights Reserved.
 #
-# SPDX-License-Identifier: Apache-2.0
+# Licensed Materials - Property of IBM
+#
+# (c) Copyright IBM Corp. 2024
+#
+# The source code for this program is not published or otherwise
+# divested of its trade secrets, irrespective of what has been
+# deposited with the U.S. Copyright Office
+#
 
 RETRY_INTERVAL_IN_SEC = 30
 FLASK_ROOT_PATH = "/app-root/src"

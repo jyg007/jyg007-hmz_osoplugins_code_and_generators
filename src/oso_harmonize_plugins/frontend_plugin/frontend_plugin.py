@@ -1,6 +1,12 @@
-# Copyright IBM Corp. All Rights Reserved.
 #
-# SPDX-License-Identifier: Apache-2.0
+# Licensed Materials - Property of IBM
+#
+# (c) Copyright IBM Corp. 2024
+#
+# The source code for this program is not published or otherwise
+# divested of its trade secrets, irrespective of what has been
+# deposited with the U.S. Copyright Office
+#
 
 import base64
 import copy
@@ -19,6 +25,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
 from . import consts
+from oso_harmonize_plugins.common import crypt
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -102,6 +109,8 @@ def bulk_download(to_dir=consts.PREPARED_DIR) -> Tuple[str, Optional[Exception]]
     if not vault_id:
         return "", Exception("Could not get env variable VAULTID")
 
+    seed = os.environ.get("SEED", "")
+
     with tempfile.NamedTemporaryFile() as root_cert_file:
         root_cert_verify, err = write_root_cert(root_cert_file)
         if err:
@@ -145,21 +154,37 @@ def bulk_download(to_dir=consts.PREPARED_DIR) -> Tuple[str, Optional[Exception]]
 
         def write_document_set(content_key: str, id_key: str) -> Optional[Exception]:
             for item in vault_json.get(content_key, []):
-                content = copy.deepcopy(empty_content)
+                logger.info(f"Saving document from {content_key}")
+                
+                try:
+                    document_id = item.get(id_key)
+                    logger.info(f"Saving document {document_id}")
 
-                content["vaultId"] = vault_json["vaultId"]
-                content.setdefault(content_key, []).append(item)
+                    content = copy.deepcopy(empty_content)
+                    content["vaultId"] = vault_json["vaultId"]
+                    content.setdefault(content_key, []).append(item)
 
-                document_path = dir_path.joinpath(item.get(id_key))
-                with document_path.open("w") as document:
-                    json.dump(content, document)
+                    # Encrypt content
+                    if len(seed) > 0:
+                        data = crypt.encrypt(json.dumps(content), seed)
+                    else:
+                        data = json.dumps(content)
+
+                    filepath = dir_path.joinpath(document_id)
+                    with filepath.open("w") as document:
+                        document.write(data)
+
+                    logger.info(f"Successfully saved document {filepath}")
+                except Exception as err:
+                    logger.error(f"Unable to save document {filepath}: {err}") 
+                    logger.exception(err)
+                    continue
 
         for content_key, id_key in [
             ("transactions", "transactionId"),
             ("accounts", "accountId"),
             ("manifests", "manifestId"),
-        ]:
-            write_document_set(content_key, id_key)
+        ]: write_document_set(content_key, id_key)
 
         os.remove(vault_path)
         return consts.PREPARED_DIR, None
@@ -177,6 +202,8 @@ def bulk_upload(from_dir=consts.SIGNED_DIR) -> Optional[Exception]:
     if not vault_id:
         return Exception("Could not get env variable VAULTID")
 
+    seed = os.environ.get("SEED", "")
+
     with tempfile.NamedTemporaryFile() as root_cert_file:
         root_cert_verify, err = write_root_cert(root_cert_file)
         if err:
@@ -186,28 +213,35 @@ def bulk_upload(from_dir=consts.SIGNED_DIR) -> Optional[Exception]:
         if err:
             return err
 
-        for filename in os.listdir(from_dir):
-            bulk_file_path = os.path.join(from_dir, filename)
-
         vaults = []
         transactions = []
         accounts = []
         manifests = []
 
-        for bulk_file_path in dir_path.iterdir():
+        for filepath in dir_path.iterdir():
             try:
-                if bulk_file_path.is_file():
-                    with bulk_file_path.open("r") as document:
-                        contents = json.load(document)
+                if filepath.is_file():
+                    logger.info(f"Reading document {filepath}")
+
+                    with filepath.open("r") as document:
+                        # Decrypt content
+                        if len(seed) > 0:
+                            contents = json.loads(crypt.decrypt(document.read(), seed))
+                        else:
+                            contents = json.load(document)
 
                         transactions.extend(contents.get("transactions", []))
                         accounts.extend(contents.get("accounts", []))
                         manifests.extend(contents.get("manifests", []))
                         vaults.extend(contents.get("vaults", []))
 
-                    bulk_file_path.unlink()
-            except Exception as e:
-                return e
+                    logger.info(f"Successfully read document {filepath}")
+            except Exception as err:
+                logger.error(f"Unable to read document {filepath}: {err}")
+                logger.exception(err)
+            finally:
+                filepath.unlink()
+                continue
 
         content = {
             "accounts": accounts,
@@ -216,17 +250,16 @@ def bulk_upload(from_dir=consts.SIGNED_DIR) -> Optional[Exception]:
             "vaults": vaults,
         }
 
-        bulk_file_path = dir_path.joinpath("bulk")
-
-        with bulk_file_path.open("w") as bulk_file:
-            json.dump(content, bulk_file)
-
         try:
+            logger.info("Uploading documents to frontend")
+
+            bulk_file_path = dir_path.joinpath("bulk")
+            with bulk_file_path.open("w") as bulk_file:
+                json.dump(content, bulk_file)
+
             with bulk_file_path.open("rb") as bulk_file:
                 data = {"files": bulk_file}
-
                 url = f"https://api.{hmz_server}/v1/vaults/operations/signed"
-
                 response = requests.post(
                     url,
                     headers={"Authorization": "Bearer " + token},
@@ -234,8 +267,10 @@ def bulk_upload(from_dir=consts.SIGNED_DIR) -> Optional[Exception]:
                     verify=root_cert_verify,
                 )
                 response.raise_for_status()
-        except Exception as e:
-            return e
+                logger.info("Successfully uploaded documents to frontend")
+        except Exception as err:
+            logger.error(f"Unable to upload documents to frontend: {err}")
+            logger.exception(err)
         finally:
             os.remove(bulk_file_path)
 

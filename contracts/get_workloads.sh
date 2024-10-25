@@ -1,4 +1,13 @@
 #!/bin/bash
+#
+# Licensed Materials - Property of IBM
+#
+# (c) Copyright IBM Corp. 2024
+#
+# The source code for this program is not published or otherwise
+# divested of its trade secrets, irrespective of what has been
+# deposited with the U.S. Copyright Office
+#
 
 FRONTEND_PLUGIN_FILE="./output/frontend/frontend_plugin.yml"
 if [ ! -f $FRONTEND_PLUGIN_FILE ]; then

@@ -1,6 +1,12 @@
-# Copyright IBM Corp. All Rights Reserved.
 #
-# SPDX-License-Identifier: Apache-2.0
+# Licensed Materials - Property of IBM
+#
+# (c) Copyright IBM Corp. 2024
+#
+# The source code for this program is not published or otherwise
+# divested of its trade secrets, irrespective of what has been
+# deposited with the U.S. Copyright Office
+#
 
 variable "DEBUG" {
   type        = bool
@@ -12,6 +18,12 @@ variable "STANDALONE" {
   type        = bool
   description = "Create contract as standalone (enable bridge port and disable plugin)"
   default     = false
+}
+
+variable "SEED" {
+  type        = string
+  description = "Encrypt data through the iteration pipeline (should be the same value as frontend plugin)"
+  default     = ""
 }
 
 variable "BACKEND_PLUGIN_IMAGE" {
