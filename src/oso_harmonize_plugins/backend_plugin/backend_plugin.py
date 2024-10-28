@@ -21,8 +21,9 @@ import requests
 import urllib3
 from urllib3.exceptions import InsecureRequestWarning
 
-from . import consts
 from oso_harmonize_plugins.common import crypt
+
+from . import consts
 
 urllib3.disable_warnings(InsecureRequestWarning)
 
@@ -68,7 +69,7 @@ def save_documents(
                 continue
 
             with document_path.open("w") as document_file:
-                document_file.write(document_content)
+                document_file.write(json.dumps(document_content))
 
     except Exception as e:
         return e
@@ -130,7 +131,9 @@ def bulk_upload(from_dir: str = consts.PREPARED_DIR) -> Optional[Exception]:
                 json.dump(content, outfile)
 
             files = {"files": (vault_id, vault_file.open("rb"))}
-            response = requests.post(f"{get_backend_endpoint()}/v1/feed/upload", files=files)
+            response = requests.post(
+                f"{get_backend_endpoint()}/v1/feed/upload", files=files
+            )
             response.raise_for_status()
             logger.info("Successfully uploaded documents to backend")
         except Exception as err:
@@ -167,16 +170,19 @@ def bulk_download(
 
             for item in response_json.get(content_key, []):
                 logger.info(f"Saving document from {content_key}")
-                
+
                 try:
                     document_id = item.get(id_key)
+                    if not document_id:
+                        logger.error(f"Could not get document id for {id_key}")
+                        continue
                     logger.info(f"Saving document {document_id}")
 
                     content = copy.deepcopy(empty_content)
                     content.setdefault(content_key, []).append(item)
 
                     # Encrypt content
-                    if len(seed) > 0:                    
+                    if len(seed) > 0:
                         data = crypt.encrypt(json.dumps(content), seed)
                     else:
                         data = json.dumps(content)
@@ -195,7 +201,8 @@ def bulk_download(
             ("transactions", "transactionId"),
             ("accounts", "accountId"),
             ("manifests", "manifestId"),
-        ]: write_document_set(content_key, id_key)
+        ]:
+            write_document_set(content_key, id_key)
 
         documents = []
 

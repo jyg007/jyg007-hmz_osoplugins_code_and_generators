@@ -13,14 +13,12 @@ import os
 import sys
 from os.path import isfile
 
-from flask import request
+from flask import abort, request
 from flask_restx import Namespace, Resource, fields
 
-from oso_harmonize_plugins.frontend_plugin.frontend_plugin import (bulk_download,
-                                                                   bulk_upload,
-                                                                   backend_status)
-
 import oso_harmonize_plugins.frontend_plugin.consts as consts
+from oso_harmonize_plugins.frontend_plugin.frontend_plugin import (
+    backend_status, bulk_download, bulk_upload)
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -57,7 +55,7 @@ class Download(Resource):
         data_dir, err = bulk_download()
         if err:
             logger.error(f"Could not complete bulk download, Error: {err}")
-            return 500
+            abort(500)
 
         for filename in os.listdir(data_dir):
             filepath = os.path.join(data_dir, filename)
@@ -91,7 +89,7 @@ class Upload(Resource):
         err = bulk_upload()
         if err:
             logger.error(err)
-            return 500
+            abort(500)
         return "OK", 204
 
 

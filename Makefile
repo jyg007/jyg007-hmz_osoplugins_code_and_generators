@@ -8,7 +8,7 @@
 # deposited with the U.S. Copyright Office
 #
 
-.PHONY : build debug
+.PHONY : build debug test
 
 REGISTRY_URL 	?= registry.control23.dap.local
 REGISTRY_NS	= oso
@@ -21,3 +21,15 @@ debug : build
 	docker build \
                 . -t oso-harmonzie-plugins-dev:latest -t $(REGISTRY_URL)/$(REGISTRY_NS)/oso-harmonize-plugins-dev:latest -f Dockerfile.debug
 
+ifdef OSO_TEST_RESULTS
+VOL_OPTS ::= -v $(OSO_TEST_RESULTS):/tests/results:rw,z
+endif
+
+test : debug
+	docker run --rm \
+		--workdir /tests \
+		$(VOL_OPTS) \
+		--platform linux/s390x \
+		--entrypoint pytest \
+		$(REGISTRY_URL)/$(REGISTRY_NS)/oso-harmonzie-plugins-dev:latest \
+		-svvv

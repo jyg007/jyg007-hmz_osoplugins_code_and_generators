@@ -24,8 +24,9 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
-from . import consts
 from oso_harmonize_plugins.common import crypt
+
+from . import consts
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -155,9 +156,12 @@ def bulk_download(to_dir=consts.PREPARED_DIR) -> Tuple[str, Optional[Exception]]
         def write_document_set(content_key: str, id_key: str) -> Optional[Exception]:
             for item in vault_json.get(content_key, []):
                 logger.info(f"Saving document from {content_key}")
-                
+
                 try:
                     document_id = item.get(id_key)
+                    if not document_id:
+                        logger.error(f"Could not get document id for {id_key}")
+                        continue
                     logger.info(f"Saving document {document_id}")
 
                     content = copy.deepcopy(empty_content)
@@ -176,7 +180,7 @@ def bulk_download(to_dir=consts.PREPARED_DIR) -> Tuple[str, Optional[Exception]]
 
                     logger.info(f"Successfully saved document {filepath}")
                 except Exception as err:
-                    logger.error(f"Unable to save document {filepath}: {err}") 
+                    logger.error(f"Unable to save document {filepath}: {err}")
                     logger.exception(err)
                     continue
 
@@ -184,7 +188,8 @@ def bulk_download(to_dir=consts.PREPARED_DIR) -> Tuple[str, Optional[Exception]]
             ("transactions", "transactionId"),
             ("accounts", "accountId"),
             ("manifests", "manifestId"),
-        ]: write_document_set(content_key, id_key)
+        ]:
+            write_document_set(content_key, id_key)
 
         os.remove(vault_path)
         return consts.PREPARED_DIR, None

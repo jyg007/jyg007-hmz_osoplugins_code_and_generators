@@ -11,14 +11,12 @@
 import logging
 import sys
 
-from flask import request
+from flask import abort, request
 from flask_restx import Namespace, Resource, fields
 
-from oso_harmonize_plugins.backend_plugin.backend_plugin import (bulk_download,
-                                                                 bulk_upload,
-                                                                 backend_status,
-                                                                 save_documents)
 import oso_harmonize_plugins.frontend_plugin.consts as consts
+from oso_harmonize_plugins.backend_plugin.backend_plugin import (
+    backend_status, bulk_download, bulk_upload, save_documents)
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -98,7 +96,7 @@ class Download(Resource):
         documents, err = bulk_download()
         if err:
             logger.error(f"Could not bulk download, Error: {err}")
-            return 500
+            abort(500)
 
         return {"documents": documents, "count": len(documents)}
 
