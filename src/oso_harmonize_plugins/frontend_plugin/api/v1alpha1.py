@@ -9,16 +9,10 @@
 #
 
 import logging
-import os
 import sys
-from os.path import isfile
 
-from flask import abort, request
+from flask import abort, current_app, request
 from flask_restx import Namespace, Resource, fields
-
-import oso_harmonize_plugins.frontend_plugin.consts as consts
-from oso_harmonize_plugins.frontend_plugin.frontend_plugin import (
-    backend_status, bulk_download, bulk_upload)
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -43,58 +37,66 @@ component_status_model = api.model(
 )
 
 
-@api.route("/documents")
+@api.route("/documents", methods=["GET"])
 class Download(Resource):
     @api.doc(
         summary="Get prepared documents",
-        description="This API downloads file from frontend.",
+        description="This API downloads documents from frontend.",
         operationId="pluginGetPrepared",
     )
+    @api.response(code=200, description="Success")
+    @api.response(code=500, description="Internal Server Error")
     def get(self):
-        confirmed_files = []
-        data_dir, err = bulk_download()
-        if err:
-            logger.error(f"Could not complete bulk download, Error: {err}")
+        try:
+            documents = current_app.fpm.bulk_download()
+        except Exception as e:
+            logger.exception(e)
             abort(500)
 
-        for filename in os.listdir(data_dir):
-            filepath = os.path.join(data_dir, filename)
-            if isfile(filepath):
-                with open(filepath, "r") as f:
-                    contents = f.read()
-                    confirmed_files.append(
-                        {"id": filename, "content": contents, "metadata": ""}
-                    )
-                os.remove(filepath)
+        return {"documents": documents, "count": len(documents)}
 
-        return {"documents": confirmed_files, "count": len(confirmed_files)}
-
-
-@api.route("/documents")
+@api.route("/documents", methods=["POST"])
 class Upload(Resource):
     @api.doc(
         summary="Post signed documents",
-        description="This API uploads file to frontend.",
+        description="This API uploads documents to frontend.",
         operationId="pluginPostSigned",
     )
-    @api.response(code=200, description="Success")
+    @api.response(code=204, description="Success")
+    @api.response(code=500, description="Internal Server Error")
     def post(self):
-        json = request.get_json(force=True)
-        os.makedirs(consts.SIGNED_DIR, exist_ok=True)
-        for document in json["documents"]:
-            filepath = os.path.join(consts.SIGNED_DIR, document["id"])
-            logger.info("Saving document to {}".format(filepath))
-            with open(filepath, "w") as f:
-                f.write(document["content"])
-        err = bulk_upload()
-        if err:
-            logger.error(err)
+        try:
+            json_data = request.get_json(force=True)
+            documents = json_data.get("documents")
+            if documents == None:
+                raise Exception("Request json key 'documents' not found")
+        except Exception as e:
+            logger.exception(e)
+            return abort(400)
+
+        try:
+            logger.info(f"Processing {len(documents)} documents for upload")
+            if (len(documents) > 0):
+                current_app.fpm.bulk_upload(documents)
+        except Exception as e:
+            logger.exception(e)
             abort(500)
+
         return "OK", 204
 
-
-@api.route("/status")
+@api.route("/status", methods=["GET"])
 class Status(Resource):
+    component_status_model = api.model(
+        "ComponentStatus", {"status": fields.String(), "error": fields.String()}
+    )
+
+    @api.response(code=200, description="Success", model=component_status_model)
+    @api.response(code=503, description="Unavailable", model=component_status_model)
     def get(self):
-        response, status_code = backend_status()
-        return {"status": response}, status_code
+        try:
+            current_app.fpm.backend_status()
+        except Exception as e:
+            logger.exception(e)
+            abort(503)
+        
+        return {"stauts": "OK"}, 200

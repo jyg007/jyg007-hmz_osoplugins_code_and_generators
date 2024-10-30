@@ -39,6 +39,7 @@ def create_app(config: object, app_name=None, root_path=None):
     pre_request.configure_flask_common(app)
     configure_api(app)
     configure_logging(app)
+    configure_backend_plugin_manager(app)
 
     return app
 
@@ -61,3 +62,8 @@ def configure_api(app: Flask):
 
 def configure_logging(app: Flask):
     return
+
+def configure_backend_plugin_manager(app: Flask):
+    from oso_harmonize_plugins.backend_plugin.backend_plugin_manager import BackendPluginManager
+
+    app.bpm = BackendPluginManager()

@@ -16,5 +16,3 @@ class BaseConfig(object):
    
 class SignedConfig(BaseConfig):
     app_name = "frontend_plugin"
-    PREPARED_DIR = consts.PREPARED_DIR
-    SIGNED_DIR = consts.SIGNED_DIR

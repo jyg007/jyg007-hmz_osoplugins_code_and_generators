@@ -8,4 +8,8 @@
 # deposited with the U.S. Copyright Office
 #
 
-FLASK_ROOT_PATH = '/app-root/src'
+
+class ConfigError(Exception):
+    """Exception raised when an Environment Variable is not found"""
+
+    pass

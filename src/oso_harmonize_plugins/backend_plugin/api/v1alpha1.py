@@ -11,16 +11,11 @@
 import logging
 import sys
 
-from flask import abort, request
+from flask import abort, current_app, request
 from flask_restx import Namespace, Resource, fields
-
-import oso_harmonize_plugins.frontend_plugin.consts as consts
-from oso_harmonize_plugins.backend_plugin.backend_plugin import (
-    backend_status, bulk_download, bulk_upload, save_documents)
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 
 api = Namespace("v1alpha1", description="")
 
@@ -52,11 +47,6 @@ documents_model = api.model(
     },
 )
 
-component_status_model = api.model(
-    "ComponentStatus", {"status": fields.String(), "error": fields.String()}
-)
-
-
 @api.route("/documents", methods=["POST"])
 class Upload(Resource):
     @api.doc(
@@ -68,20 +58,27 @@ class Upload(Resource):
         operationId="backendBatchUpload",
         body=documents_model,
     )
-    @api.response(code=200, description="Documents batched and forwarded as response")
+    @api.response(code=204, description="Success")
+    @api.response(code=500, description="Internal Server Error")
     def post(self):
-        err = save_documents(request.get_json(force=True)["documents"])
-        if err:
-            logger.error(f"Could not save documents, Error: {err}")
-            return 500
+        try:
+            json_data = request.get_json(force=True)
+            documents = json_data.get("documents")
+            if documents == None:
+                raise Exception("Request json key 'documents' not found")
+        except Exception as e:
+            logger.exception(e)
+            return abort(400)
 
-        err = bulk_upload()
-        if err:
-            logger.error(f"Could not bulk upload, Error: {err}")
-            return 500
+        try:
+            logger.info(f"Processing {len(documents)} documents for upload")
+            if (len(documents) > 0):
+                current_app.bpm.bulk_upload(documents)
+        except Exception as e:
+            logger.exception(e)
+            abort(500)
 
         return "OK", 204
-
 
 @api.route("/documents", methods=["GET"])
 class Download(Resource):
@@ -91,20 +88,30 @@ class Download(Resource):
         operationId="backendBatchDownload",
         model=documents_model,
     )
-    @api.response(code=200, description="", model=documents_model)
+    @api.response(code=200, description="Success", model=documents_model)
+    @api.response(code=500, description="Internal Server Error")
     def get(self):
-        documents, err = bulk_download()
-        if err:
-            logger.error(f"Could not bulk download, Error: {err}")
+        try:
+            documents = current_app.bpm.bulk_download()
+        except Exception as e:
+            logger.exception(e)
             abort(500)
 
         return {"documents": documents, "count": len(documents)}
 
-
 @api.route("/status", methods=["GET"])
 class Status(Resource):
-    @api.response(code=200, description="", model=component_status_model)
-    @api.response(code=503, description="", model=component_status_model)
+    component_status_model = api.model(
+        "ComponentStatus", {"status": fields.String(), "error": fields.String()}
+    )
+
+    @api.response(code=200, description="Success", model=component_status_model)
+    @api.response(code=503, description="Unavailable", model=component_status_model)
     def get(self):
-        response, status_code = backend_status()
-        return {"status": response}, status_code
+        try:
+            current_app.bpm.backend_status()
+        except Exception as e:
+            logger.exception(e)
+            abort(503)
+        
+        return {"status": "OK"}, 200

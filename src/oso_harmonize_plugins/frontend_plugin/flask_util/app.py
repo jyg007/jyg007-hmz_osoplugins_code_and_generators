@@ -14,7 +14,6 @@ from flask_restx import Api
 from .config import BaseConfig
 from oso_harmonize_plugins.common import pre_request
 
-
 def create_app(config: object, app_name=None, root_path=None):
 
     if app_name is None:
@@ -39,6 +38,7 @@ def create_app(config: object, app_name=None, root_path=None):
     pre_request.configure_flask_common(app)
     configure_api(app)
     configure_logging(app)
+    configure_frontend_plugin_manager(app)
 
     return app
 
@@ -62,3 +62,8 @@ def configure_api(app: Flask):
 
 def configure_logging(app: Flask):
     return
+
+def configure_frontend_plugin_manager(app: Flask):
+    from oso_harmonize_plugins.frontend_plugin.frontend_plugin_manager import FrontendPluginManager
+
+    app.fpm = FrontendPluginManager()

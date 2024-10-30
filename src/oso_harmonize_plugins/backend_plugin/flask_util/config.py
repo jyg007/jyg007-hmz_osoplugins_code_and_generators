@@ -16,6 +16,4 @@ class BaseConfig(object):
     
 class BackendConfig(BaseConfig):
     app_name = "backend_plugin"
-    PREPARED_DIR=consts.PREPARED_DIR
-    SIGNED_DIR=consts.SIGNED_DIR
    

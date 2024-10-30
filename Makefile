@@ -31,5 +31,5 @@ test : debug
 		$(VOL_OPTS) \
 		--platform linux/s390x \
 		--entrypoint pytest \
-		$(REGISTRY_URL)/$(REGISTRY_NS)/oso-harmonzie-plugins-dev:latest \
+		$(REGISTRY_URL)/$(REGISTRY_NS)/oso-harmonize-plugins-dev:latest \
 		-svvv
