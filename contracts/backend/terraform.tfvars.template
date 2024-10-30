@@ -1,5 +1,5 @@
 # Cold Vault Images
-BACKEND_PLUGIN_IMAGE="registry.control23.dap.local/oso/oso-harmonzie-plugins@sha256:"
+BACKEND_PLUGIN_IMAGE="registry.control23.dap.local/oso/oso-harmonize-plugins@sha256:"
 COLD_BRIDGE_IMAGE="registry.control23.dap.local/metaco-ripple/vault-cold-bridge@sha256:"
 COLD_VAULT_IMAGE="registry.control23.dap.local/metaco-ripple/vault-releases@sha256:"
 KMSCONNECT_IMAGE="registry.control23.dap.local/metaco-ripple/kms-ibm@sha256:"

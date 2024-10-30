@@ -172,7 +172,7 @@ The cold vault will need to be registered as part of a manual process prior to d
 1. Edit the domain.xml and ensure the hpcr image reference location is correct
 1. Create the grep11 hpvs instance:
     
-    `sudo virsh craete ./domain.xml`
+    `sudo virsh create ./domain.xml`
 1. Verify through the syslog logging that the GREP11 service comes up successfully
 
 ### Backend
@@ -190,7 +190,7 @@ The cold vault will need to be registered as part of a manual process prior to d
 1. Edit the domain.xml and ensure the hpcr image reference location is correct
 1. Create the backend hpvs instance:
     
-    `sudo virsh craete ./domain.xml`
+    `sudo virsh create ./domain.xml`
 1. Verify through the syslog logging that the backend services comes up successfully
 
 ### Vault Creation

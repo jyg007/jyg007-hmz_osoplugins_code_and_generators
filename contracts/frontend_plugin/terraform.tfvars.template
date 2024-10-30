@@ -1,5 +1,5 @@
 # Container Configuration
-FRONTEND_PLUGIN_IMAGE="registry.control12.dap.local/oso/oso-harmonzie-plugins@sha256:"
+FRONTEND_PLUGIN_IMAGE="registry.control12.dap.local/oso/oso-harmonize-plugins@sha256:"
 
 # Harmonize
 HMZ_SERVER=""

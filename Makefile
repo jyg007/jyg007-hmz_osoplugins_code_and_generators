@@ -10,19 +10,20 @@
 
 .PHONY : build debug test
 
-REGISTRY_URL 	?= registry.control23.dap.local
-REGISTRY_NS	= oso
+REGISTRY ?= us.icr.io
+NAMESPACE ?= dap-osc-dev
+TAG ?= latest
 
 build :
 	docker build \
-		. -t oso-harmonzie-plugins:latest -t $(REGISTRY_URL)/$(REGISTRY_NS)/oso-harmonize-plugins:latest -f Dockerfile
+		. -t oso-harmonize-plugins:latest -t $(REGISTRY)/$(NAMESPACE)/oso-harmonize-plugins:$(TAG) -f Dockerfile --platform linux/s390x
 
 debug : build
 	docker build \
-                . -t oso-harmonzie-plugins-dev:latest -t $(REGISTRY_URL)/$(REGISTRY_NS)/oso-harmonize-plugins-dev:latest -f Dockerfile.debug
+                . -t oso-harmonize-plugins-dev:latest -t $(REGISTRY)/$(NAMESPACE)/oso-harmonize-plugins-dev:$(TAG) -f Dockerfile.debug --platform linux/s390x
 
-ifdef OSO_TEST_RESULTS
-VOL_OPTS ::= -v $(OSO_TEST_RESULTS):/tests/results:rw,z
+ifdef HARMONIZE_PLUGINS_TEST_RESULTS
+VOL_OPTS ::= -v $(HARMONIZE_PLUGINS_TEST_RESULTS):/tests/results:rw,z
 endif
 
 test : debug
@@ -31,5 +32,5 @@ test : debug
 		$(VOL_OPTS) \
 		--platform linux/s390x \
 		--entrypoint pytest \
-		$(REGISTRY_URL)/$(REGISTRY_NS)/oso-harmonize-plugins-dev:latest \
+		$(REGISTRY)/$(NAMESPACE)/oso-harmonize-plugins-dev:$(TAG) \
 		-svvv
