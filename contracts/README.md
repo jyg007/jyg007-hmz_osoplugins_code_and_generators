@@ -15,10 +15,10 @@
     skopeo standalone-verify images/oso-harmonize-plugins/manifest.json us.icr.io/dap-osc-staging/oso-harmonize-plugins:v1.3.0 $FINGERPRINT images/oso-harmonize-plugins/signature-1
     ```
 1. Load Docker images
-    
+
     `skopeo copy dir:./images/oso-harmonize-plugins docker://registry.control23.dap.local/oso/oso-harmonize-plugins:v1.3.0 --dest-creds $REGISTRY_USER:$REGISTRY_PASSWORD --remove-signatures`
 1. Retrieve the digest of the loaded docker image:
-    
+
     `skopeo inspect docker://registry.control23.dap.local/oso/oso-harmonize-plugins:v1.3.0 --creds $REGISTRY_USER:$REGISTRY_PASSWORD | jq '.Name + "@" + .Digest'`
 
 ## Frontend Plugin
@@ -30,34 +30,33 @@ The oso harmonize frontend plugin is used to import/export operations from withi
 - OpenTofu and required terraform providers (hpcr/null) which can be obtained via the OSO release archive
 
 ### Functional OSO user
-A functional user specific for OSO should be created within the Harmonize UI. This user will be used to import/export operations from within Harmonize. Note, the OSO harmonize plugin does not support the Ed25519 elliptic curve algorithm for the user. 
+A functional user specific for OSO should be created within the Harmonize UI. This user will be used to import/export operations from within Harmonize. Note, the OSO harmonize plugin does not support the Ed25519 elliptic curve algorithm for the user.
 
 1. Generate a private key used for the functional user
-    
+
     `openssl ecparam -genkey -name secp256k1 -noout -out privateKey.pem`
 1. Generate a public key from the previously generated private key
-    
+
     `openssl ec -in privateKey.pem -pubout -outform DER | openssl base64 -A -out publicKey.pem`
 1. Within the Harmonize UI, create the functional user with the user public key from the content of the public key `publicKey.pem`.
 1. Obtain the base64 value used for the `SK` terraform variable within the contract
-    
+
     `base64 -i privateKey.pem`
 
 ### Generate encrypted workload
 The encrypted workload will be used within OSO when deploying the frontend (LPAR1) components during the `init` process. Within the `frontend_plugin` directory:
 
 1. Copy the terraform template
-    
+
     `cp terraform.tfvars.template terraform.tfvars`
 1. Edit the `terraform.tfvars` and assign values to the terrarform variables
     - `HMZ_SERVER` - Harmonize frontend endpoint
     - `VAULTID` - Vault ID used for cold vault operations (if new vault, generate a new uuid)
     - `SK` - Base64 private key for OSO functional user account (see above)
-    - `PUB` - Public key of the OSO functional user account (see above)
     - `FRONTEND_PLUGIN_IMAGE` - Frontend plugin image with sha256 (see above)
     - `SEED` - Passphrase used to optionally encrypt the data being transferred between OSO and Harmonize (matches backend)
 1. Within the `contracts` directory, generate the encrypted workload:
-    
+
     `./create-frontend.sh`
 
 ## Grep11
@@ -77,13 +76,13 @@ The grep11 server and client keys/certificates can be generated from within the 
 ### Generate encrypted workload
 The encrypted workload will be used within OSO when deploying along with the backend services during a signing iteration process on LPAR3. Within the `grep11` directory:
 1. Copy the terraform template
-    
+
     `cp terraform.tfvars.template terraform.tfvars`
 1. Edit the `terraform.tfvars` and assign values to the terraform variables
     - `IMAGE` - GREP11-C16 image with sha256 (see above)
     - `GREP11_CA_CERT` - Grep11 CA certificate (see above)
     - `GREP11_SERVER_KEY` - Grep11 server private key (see above)
-    - `GREP11_SERVER_CERT` - Grep11 server certificate (see above) 
+    - `GREP11_SERVER_CERT` - Grep11 server certificate (see above)
     - `DOMAIN` - Crypto appliance domain
     - `C16_CA_CERT` - Crypto appliance CA certificate
     - `C16_CLIENT_CERT` - Crypto appliance client certificate
@@ -99,7 +98,7 @@ The encrypted workload will be used within OSO when deploying along with the bac
     - `SYSLOG_CLIENT_CERT` - Syslog client certificate
     - `SYSLOG_CLIENT_KEY` - Syslog client key
 1. Within the `contracts` directory, generate the encryptd workload:
-    
+
     `./create-grep11.sh <prefix>`
 
 ## Backend
@@ -114,7 +113,7 @@ Obtain the cold bridge, cold vault, and kmsconnect images and copy them to the p
 ### Generate encrypted workload
 The encrypted workload will be used within OSO when deploying along with the grep11 services during a signing iteration process on LPAR3. Within the `backend` directory:
 1. Copy the terraform template
-    
+
     `cp terraform.tfvars.template terraform.tfvars`
 1. Edit the `terraform.tfvars` and assign values to the terraform variables
     - `BACKEND_PLUGIN_IMAGE` - Backend plugin image with sha256 (see above)
@@ -142,7 +141,7 @@ The encrypted workload will be used within OSO when deploying along with the gre
     - `SYSLOG_CLIENT_CERT` - Syslog client certificate
     - `SYSLOG_CLIENT_KEY` - Syslog client key
 1. Within the `contracts` directory, generate the encryptd workload:
-    
+
     `./create-backend.sh`
 
 ## Registry Cold Vault Process
@@ -157,21 +156,21 @@ The cold vault will need to be registered as part of a manual process prior to d
     sudo chzdev -a <HiperSocket12> online=0
     sudo chzdev -a <HiperSocket23> online=1
     ```
-1. Copy the `output` directory to LPAR3 
+1. Copy the `output` directory to LPAR3
 1. Login to LPAR3 (create temporary OSA network if required)
 
 ### Grep11
 
 1. On LPAR3, change the current working direcotry to `output/grep11`
 1. Copy the cloudinit to the libvirt images directory:
-    
+
     `sudo cp cloud-init /var/lib/libvirt/images/grep11-cloudinit`
 1. Create a grep11 overlay image:
-    
+
     `sudo qemu-img create -f qcow2 /var/lib/libvirt/images/grep11-overlay.qcow2 10G`
 1. Edit the domain.xml and ensure the hpcr image reference location is correct
 1. Create the grep11 hpvs instance:
-    
+
     `sudo virsh create ./domain.xml`
 1. Verify through the syslog logging that the GREP11 service comes up successfully
 
@@ -179,17 +178,17 @@ The cold vault will need to be registered as part of a manual process prior to d
 
 1. On LPAR3, change the current working directory to `output/backend`
 1. Copy the cloudinit to the libvirt images directory:
-    
+
     `sudo cp cloud-init /var/lib/libvirt/images/vault-cloudinit`
 1. Create a backend overlay image:
-    
+
     `sudo qemu-img create -f qcow2 /var/lib/libvirt/images/vault-overlay.qcow2 10G`
 1. Create an empty data volume for the vault (if not already create):
-    
+
     `sudo qemu-img create -f qcow2 /var/lib/libvirt/images/vault-data.qcow2 10G`
 1. Edit the domain.xml and ensure the hpcr image reference location is correct
 1. Create the backend hpvs instance:
-    
+
     `sudo virsh create ./domain.xml`
 1. Verify through the syslog logging that the backend services comes up successfully
 
@@ -202,10 +201,10 @@ The cold vault will need to be registered as part of a manual process prior to d
 ### Vault Registration
 
 1. Obtain the HiperSocket23 network address for the backend service
-    
+
     `nslookup backend.control23.dap.local 192.168.5.9`
-1. Retrieve the pending operations from the cold vault: 
-    
+1. Retrieve the pending operations from the cold vault:
+
     `curl http://<backend-ip>:8080/v1/feed/download?clean=True`
 1. Import the JSON output from the curl command into the cold vault pending operations through the Harmonize UI as a `.dat` file
 1. Once successfully imported, the vault activation status shows `Completed`

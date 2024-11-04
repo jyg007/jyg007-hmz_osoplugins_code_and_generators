@@ -16,15 +16,15 @@ import os
 import sys
 import tempfile
 import uuid
-from typing import IO, Tuple, Union
-
+from typing import IO, Union
 
 import requests
-from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
 from oso_harmonize_plugins.common import crypt, errors
+
 
 class FrontendPluginManager:
     def __init__(self):
@@ -33,14 +33,16 @@ class FrontendPluginManager:
         private_key_b64 = os.environ["SK"]
         private_key_decoded = base64.b64decode(private_key_b64)
         self.private_key = load_pem_private_key(private_key_decoded, password=None)
-        
+        self.public_key = base64.b64encode(
+            self.private_key.public_key().public_bytes(
+                encoding=serialization.Encoding.DER,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo,
+            )
+        ).decode("utf-8")
+
         if "HMZ_SERVER" not in os.environ:
             raise errors.ConfigError("HMZ_SERVER not found")
         self.hmz_server = os.environ["HMZ_SERVER"]
-
-        if "PUB" not in os.environ:
-            raise errors.ConfigError("PUB not found")
-        self.public_key = os.environ["PUB"]
 
         if "VAULTID" not in os.environ:
             raise errors.ConfigError("VAULTID not found")
@@ -57,7 +59,9 @@ class FrontendPluginManager:
 
     def _get_token(self) -> str:
         challenge = str(uuid.uuid4())
-        signature = self.private_key.sign(bytes(challenge, "utf-8"), ec.ECDSA(hashes.SHA256()))
+        signature = self.private_key.sign(
+            bytes(challenge, "utf-8"), ec.ECDSA(hashes.SHA256())
+        )
         data = {
             "client_id": "customer_api",
             "grant_type": "password",
@@ -98,11 +102,12 @@ class FrontendPluginManager:
     def bulk_download(self) -> list:
         self.logger.info("Performing bulk download from frontend")
         token = self.get_token()
+        url = f"https://api.{self.hmz_server}/v1/vaults/{self.vault_id}/operations/prepared"
         response = requests.get(
-            url = f"https://api.{self.hmz_server}/v1/vaults/{self.vault_id}/operations/prepared",
-            headers = {"Authorization": "Bearer " + token},
-            stream = True,
-            verify = self.verify,
+            url=url,
+            headers={"Authorization": "Bearer " + token},
+            stream=True,
+            verify=self.verify,
         )
         response.raise_for_status()
         vault_json = response.json()
@@ -117,7 +122,9 @@ class FrontendPluginManager:
 
         def write_document_set(documents, content_key: str, id_key: str):
             for item in vault_json.get(content_key, []):
-                self.logger.info(f"Saving document from {content_key} for bulk download")
+                self.logger.info(
+                    f"Saving document from {content_key} for bulk download"
+                )
 
                 try:
                     document_id = item.get(id_key)
@@ -133,9 +140,13 @@ class FrontendPluginManager:
                     else:
                         data = json.dumps(content)
 
-                    documents.append({"id": document_id, "content": data, "metadata": ""})
+                    documents.append(
+                        {"id": document_id, "content": data, "metadata": ""}
+                    )
 
-                    self.logger.info(f"Successfully saved document {document_id} for bulk download")
+                    self.logger.info(
+                        f"Successfully saved document {document_id} for bulk download"
+                    )
                 except Exception as e:
                     self.logger.exception(e)
                     continue
@@ -145,7 +156,8 @@ class FrontendPluginManager:
             ("transactions", "transactionId"),
             ("accounts", "accountId"),
             ("manifests", "manifestId"),
-        ]: write_document_set(documents, content_key, id_key)
+        ]:
+            write_document_set(documents, content_key, id_key)
 
         return documents
 
@@ -171,7 +183,9 @@ class FrontendPluginManager:
                 manifests.extend(contents.get("manifests", []))
                 vaults.extend(contents.get("vaults", []))
 
-                self.logger.info(f"Successfully saved document {document_id} for bulk upload")
+                self.logger.info(
+                    f"Successfully saved document {document_id} for bulk upload"
+                )
             except Exception as e:
                 self.logger.exception(e)
                 continue
@@ -186,15 +200,15 @@ class FrontendPluginManager:
         self.logger.info("Performing bulk upload to frontend")
         token = self.get_token()
         try:
-            with tempfile.NamedTemporaryFile(mode='w', delete=False) as vault_file:
+            with tempfile.NamedTemporaryFile(mode="w", delete=False) as vault_file:
                 json.dump(content, vault_file)
 
-            files = {"files": open(vault_file.name, 'rb')}
+            files = {"files": open(vault_file.name, "rb")}
             response = requests.post(
-                url = f"https://api.{self.hmz_server}/v1/vaults/operations/signed",
-                headers = {"Authorization": "Bearer " + token},
-                files = files,
-                verify = self.verify,
+                url=f"https://api.{self.hmz_server}/v1/vaults/operations/signed",
+                headers={"Authorization": "Bearer " + token},
+                files=files,
+                verify=self.verify,
             )
             response.raise_for_status()
         except Exception as e:

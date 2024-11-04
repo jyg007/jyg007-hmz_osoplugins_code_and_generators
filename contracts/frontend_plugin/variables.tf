@@ -38,11 +38,6 @@ variable "SK" {
   description = "Private (secret) key of a registered user used to login to Harmonize"
 }
 
-variable "PUB" {
-  type = string
-  description = "Public key of a registered user used to login to Harmonize"
-}
-
 variable "VAULT_ID" {
   type = string
   description = "Harmonize vault id"

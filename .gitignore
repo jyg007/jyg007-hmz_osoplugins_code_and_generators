@@ -1,0 +1,57 @@
+# direnv
+.direnv
+
+# User IDE settings
+.vscode
+.venv
+
+# Build directories
+build
+__pycache__
+
+# Test directories
+.coverage
+coverage
+
+# User environments
+.env
+.env.local
+.env.build
+.env.production.local
+.env.test.local
+.env.sample
+.env.tf
+
+# Terraform items
+*.tfvars
+*.tfstate*
+*.lock.hcl
+.terraform
+
+# Generated contracts
+**/user_data/**/*.yml
+
+# Lock files
+*~
+
+# Cython Generated
+*.c
+*.so
+
+# Python
+build
+dist
+*.egg
+*.egg-info
+*.whl
+
+# Tests
+junit.xml
+cov.xml
+
+# Secure build configs
+sbs-config.*.json
+!sbs-config.template.json
+.DS_Store
+
+*.pem
