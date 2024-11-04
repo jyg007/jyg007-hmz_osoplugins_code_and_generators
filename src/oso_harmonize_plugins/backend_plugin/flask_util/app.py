@@ -11,8 +11,9 @@
 from flask import Flask
 from flask_restx import Api
 
-from .config import BaseConfig
 from oso_harmonize_plugins.common import pre_request
+
+from .config import BaseConfig
 
 
 def create_app(config: object, app_name=None, root_path=None):
@@ -50,20 +51,24 @@ def configure_app(app: Flask, config: object):
 
 def configure_api(app: Flask):
     from ..api.v1alpha1 import api as v1alpha1
+
     api = Api(
-        title='My Title',
-        version='1.0',
-        description='A description',
+        title="My Title",
+        version="1.0",
+        description="A description",
     )
 
-    api.add_namespace(v1alpha1, path='/api/backend/' + v1alpha1.name)
+    api.add_namespace(v1alpha1, path="/api/backend/" + v1alpha1.name)
     api.init_app(app)
 
 
 def configure_logging(app: Flask):
     return
 
+
 def configure_backend_plugin_manager(app: Flask):
-    from oso_harmonize_plugins.backend_plugin.backend_plugin_manager import BackendPluginManager
+    from oso_harmonize_plugins.backend_plugin.backend_plugin_manager import (
+        BackendPluginManager,
+    )
 
     app.bpm = BackendPluginManager()

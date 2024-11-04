@@ -13,6 +13,7 @@
 # entrypoint for nginx
 touch /tmp/certs.pem
 echo 'Starting envsubst'
+# shellcheck disable=SC2016,SC2154
 HOSTNAME="https://dapcs.ibm.com" COMPONENT_DN="$joined" envsubst '\$PORT \$HOSTNAME' < /app-root/nginx/nginx.conf.template > /app-root/nginx/nginx.conf
 echo 'Starting nginx'
 nginx -c /app-root/nginx/nginx.conf -g 'daemon off;' &

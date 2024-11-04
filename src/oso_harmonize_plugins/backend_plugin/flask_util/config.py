@@ -10,10 +10,11 @@
 
 import oso_harmonize_plugins.frontend_plugin.consts as consts
 
+
 class BaseConfig(object):
     app_name = "backend_plugin"
     root_path = consts.FLASK_ROOT_PATH
-    
+
+
 class BackendConfig(BaseConfig):
     app_name = "backend_plugin"
-   

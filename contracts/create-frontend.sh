@@ -11,12 +11,11 @@
 
 contract_root=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-pushd "$contract_root"
+pushd "$contract_root" || exit 1
 
-pushd frontend_plugin
+pushd frontend_plugin || exit 1
 tofu init -upgrade && tofu destroy -auto-approve && tofu apply -auto-approve
 cp frontend_plugin.yml ../output/frontend
-popd
+popd || exit 1
 
-popd
-
+popd || exit 1

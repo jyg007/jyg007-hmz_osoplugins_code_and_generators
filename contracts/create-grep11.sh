@@ -18,18 +18,17 @@ xorriso="/usr/bin/xorriso"
 
 contract_root=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-pushd "$contract_root"
+pushd "$contract_root" || exit 1
 
-pushd grep11
+pushd grep11 || exit 1
 tofu init && tofu destroy -auto-approve && tofu apply -auto-approve
 cp -rf grep11-c16.yml ../output/grep11/user-data
-popd
+popd || exit 1
 
-pushd output/grep11
+pushd output/grep11 || exit 1
 touch vendor-data
 echo "local-hostname: $1-cs-backend-grep11" > meta-data
 ${xorriso} -as mkisofs -o cloud-init -V cidata -J -r user-data meta-data vendor-data
-popd
+popd || exit 1
 
-popd
-
+popd || exit 1

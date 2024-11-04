@@ -69,7 +69,7 @@ variable "C16_CLIENT_LOGLEVEL" {
   validation {
     condition     = contains(["trace", "debug", "info", "warn", "err", "error", "critical", "off"], var.C16_CLIENT_LOGLEVEL)
     error_message = "Valid values for var: C16_CLIENT_LOGLEVEL are (trace, debug, info, warn, err, error, critical, off)."
-  } 
+  }
 }
 
 variable "C16_CLIENT_KEY" {

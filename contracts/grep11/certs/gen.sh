@@ -11,7 +11,7 @@
 
 ci_root=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-pushd "$ci_root"
+pushd "$ci_root" || exit
 
 # CA
 openssl genrsa -out grep11ca-key.pem 4096
@@ -28,4 +28,4 @@ openssl x509 -in grep11server-req.csr -req -days 365 -CA grep11ca.pem -CAkey gre
 openssl req -config client.cnf -newkey rsa:4096 -nodes -keyout grep11client-key.pem -new -out grep11client.csr
 openssl x509 -req -in grep11client.csr -days 7300 -CA grep11ca.pem -CAkey grep11ca-key.pem -CAcreateserial -out grep11client.pem
 
-popd
+popd || exit

@@ -12,8 +12,8 @@ import copy
 import json
 import logging
 import os
-import tempfile
 import sys
+import tempfile
 from typing import Dict, List
 
 import requests
@@ -24,6 +24,7 @@ from oso_harmonize_plugins.common import crypt, errors
 
 urllib3.disable_warnings(InsecureRequestWarning)
 
+
 class BackendPluginManager:
     def __init__(self):
         if "BACKEND_ENDPOINT" not in os.environ:
@@ -31,8 +32,7 @@ class BackendPluginManager:
         self.backend_endpoint = os.environ["BACKEND_ENDPOINT"]
         self.seed = os.environ.get("SEED", "")
 
-        logging.basicConfig(stream=sys.stdout, level=
-        logging.INFO)
+        logging.basicConfig(stream=sys.stdout, level=logging.INFO)
         self.logger = logging.getLogger(__name__)
 
     def backend_status(self):
@@ -58,8 +58,10 @@ class BackendPluginManager:
 
         def write_document_set(documents, content_key: str, id_key: str):
             for item in response_json.get(content_key, []):
-                self.logger.info(f"Saving document from {content_key} for bulk download")
-                    
+                self.logger.info(
+                    f"Saving document from {content_key} for bulk download"
+                )
+
                 try:
                     document_id = item.get(id_key)
                     self.logger.info(f"Saving document {document_id} for bulk download")
@@ -68,14 +70,18 @@ class BackendPluginManager:
                     content.setdefault(content_key, []).append(item)
 
                     # Encrypt content
-                    if len(self.seed) > 0:                    
+                    if len(self.seed) > 0:
                         data = crypt.encrypt(json.dumps(content), self.seed)
                     else:
                         data = json.dumps(content)
 
-                    documents.append({"id": item.get(id_key), "content": data, "metadata": ""})
+                    documents.append(
+                        {"id": item.get(id_key), "content": data, "metadata": ""}
+                    )
 
-                    self.logger.info(f"Successfully saved document {document_id} for bulk download")
+                    self.logger.info(
+                        f"Successfully saved document {document_id} for bulk download"
+                    )
                 except Exception as err:
                     self.logger.exception(err)
                     continue
@@ -85,7 +91,8 @@ class BackendPluginManager:
             ("transactions", "transactionId"),
             ("accounts", "accountId"),
             ("manifests", "manifestId"),
-        ]: write_document_set(documents, content_key, id_key)
+        ]:
+            write_document_set(documents, content_key, id_key)
 
         return documents
 
@@ -110,11 +117,13 @@ class BackendPluginManager:
                 transactions.extend(contents.get("transactions", []))
                 accounts.extend(contents.get("accounts", []))
                 manifests.extend(contents.get("manifests", []))
-                
+
                 if vault_id is None:
                     vault_id = contents.get("vaultId")
-                
-                self.logger.info(f"Successfully saved document {document_id} for bulk upload")
+
+                self.logger.info(
+                    f"Successfully saved document {document_id} for bulk upload"
+                )
             except Exception as e:
                 self.logger.exception(e)
                 continue
@@ -132,13 +141,13 @@ class BackendPluginManager:
         self.logger.info("Performing bulk upload to backend")
 
         try:
-            with tempfile.NamedTemporaryFile(mode='w', delete=False) as vault_file:
+            with tempfile.NamedTemporaryFile(mode="w", delete=False) as vault_file:
                 json.dump(content, vault_file)
 
-            files = {"files": (vault_id, open(vault_file.name, 'rb'))}
+            files = {"files": (vault_id, open(vault_file.name, "rb"))}
             response = requests.post(
-                url = f"{self.backend_endpoint}/v1/feed/upload",
-                files = files,
+                url=f"{self.backend_endpoint}/v1/feed/upload",
+                files=files,
             )
             response.raise_for_status()
         except Exception as e:

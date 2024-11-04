@@ -8,7 +8,6 @@
 # deposited with the U.S. Copyright Office
 #
 
-from .flask_util import config
 from .flask_util.app import create_app
 
 app = create_app(config=None)

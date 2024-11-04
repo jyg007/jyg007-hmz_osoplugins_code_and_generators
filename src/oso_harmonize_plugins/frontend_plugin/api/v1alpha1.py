@@ -55,6 +55,7 @@ class Download(Resource):
 
         return {"documents": documents, "count": len(documents)}
 
+
 @api.route("/documents", methods=["POST"])
 class Upload(Resource):
     @api.doc(
@@ -68,7 +69,7 @@ class Upload(Resource):
         try:
             json_data = request.get_json(force=True)
             documents = json_data.get("documents")
-            if documents == None:
+            if documents is None:
                 raise Exception("Request json key 'documents' not found")
         except Exception as e:
             logger.exception(e)
@@ -76,13 +77,14 @@ class Upload(Resource):
 
         try:
             logger.info(f"Processing {len(documents)} documents for upload")
-            if (len(documents) > 0):
+            if len(documents) > 0:
                 current_app.fpm.bulk_upload(documents)
         except Exception as e:
             logger.exception(e)
             abort(500)
 
         return "OK", 204
+
 
 @api.route("/status", methods=["GET"])
 class Status(Resource):
@@ -98,5 +100,5 @@ class Status(Resource):
         except Exception as e:
             logger.exception(e)
             abort(503)
-        
+
         return {"stauts": "OK"}, 200

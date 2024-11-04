@@ -10,9 +10,11 @@
 
 import oso_harmonize_plugins.frontend_plugin.consts as consts
 
+
 class BaseConfig(object):
     app_name = "frontend_plugin"
     root_path = consts.FLASK_ROOT_PATH
-   
+
+
 class SignedConfig(BaseConfig):
     app_name = "frontend_plugin"

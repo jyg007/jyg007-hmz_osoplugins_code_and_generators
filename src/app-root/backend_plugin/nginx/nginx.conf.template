@@ -40,7 +40,7 @@ http {
     # keepalive_timeout  65;
 
   server {
-    error_log /var/log/nginx/error.log debug; 
+    error_log /var/log/nginx/error.log debug;
 
     listen ${PORT} ssl;
     server_name _;
@@ -62,7 +62,7 @@ http {
 
       proxy_set_header X-SSL-CERT           $ssl_client_escaped_cert;
       proxy_set_header X-SSL-CLIENT-VERIFY  $ssl_client_verify;
-      
+
       # proxy_set_header X-Real-IP        $remote_host;
       # proxy_set_header Forwarded        $proxy_add_forwarded;
       # proxy_set_header X-Forwarded-For  $proxy_add_x_forwarded_for;

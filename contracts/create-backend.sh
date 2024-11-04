@@ -13,19 +13,18 @@ xorriso="/usr/bin/xorriso"
 
 contract_root=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-pushd "$contract_root"
+pushd "$contract_root" || exit 1
 
-pushd backend
+pushd backend || exit 1
 tofu init && tofu destroy -auto-approve && tofu apply -auto-approve
 cp -rf backend.yml ../output/backend/user-data
-popd
+popd || exit 1
 
-pushd output/backend
+pushd output/backend || exit 1
 touch vendor-data
 echo "local-hostname: backend" > meta-data
 ${xorriso} -as mkisofs -o cloud-init -V cidata -J -r user-data meta-data vendor-data
 cloud-localds cloud-init -V vendor-data user-data meta-data
-popd
+popd || exit 1
 
-popd
-
+popd || exit 1

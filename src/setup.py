@@ -44,4 +44,3 @@ setup(
     ext_modules=cythonize(["oso_harmonize_plugins/**/*.py"]),
     **default_configure(),
 )
-

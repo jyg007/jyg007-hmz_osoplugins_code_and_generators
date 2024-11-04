@@ -8,4 +8,4 @@
 # deposited with the U.S. Copyright Office
 #
 
-FLASK_ROOT_PATH = '/app-root/src'
+FLASK_ROOT_PATH = "/app-root/src"

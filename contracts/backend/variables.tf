@@ -154,4 +154,3 @@ variable "PORT" {
   description = "External port number for api"
   default     = "4000"
 }
-

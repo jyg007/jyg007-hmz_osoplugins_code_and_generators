@@ -14,21 +14,21 @@ if [ ! -f $FRONTEND_PLUGIN_FILE ]; then
   echo "frontend plugin file does not exist: $FRONTEND_PLUGIN_FILE"
   exit 1
 fi
-FRONTEND_PLUGIN=`cat $FRONTEND_PLUGIN_FILE`
+FRONTEND_PLUGIN=$(cat "$FRONTEND_PLUGIN_FILE")
 
 BACKEND_FILE="./output/backend/user-data"
 if [ ! -f $BACKEND_FILE ]; then
   echo "backend file does not exist: $BACKEND_FILE"
   exit 1
 fi
-BACKEND=`cat $BACKEND_FILE | grep "workload:" | awk '{print $2}'`
+BACKEND=$(grep "workload:" "$BACKEND_FILE" | awk '{print $2}')
 
 GREP11_FILE="./output/grep11/user-data"
 if [ ! -f $GREP11_FILE ]; then
   echo "backend file does not exist: $GREP11_FILE"
   exit 1
 fi
-GREP11=`cat $GREP11_FILE | grep "workload:" | awk '{print $2}'`
+GREP11=$(grep "workload:" "$GREP11_FILE" | awk '{print $2}')
 
 cat <<-EOT
 # Hyper Protect Encrypted Workloads

@@ -14,6 +14,7 @@
 touch /tmp/certs.pem
 
 echo 'starting envsubst'
+# shellcheck disable=SC2016
 envsubst '\$PORT' < /app-root/nginx/nginx.conf.template > /app-root/nginx/nginx.conf
 echo 'Starting nginx'
 nginx -c /app-root/nginx/nginx.conf -g 'daemon off;' &
