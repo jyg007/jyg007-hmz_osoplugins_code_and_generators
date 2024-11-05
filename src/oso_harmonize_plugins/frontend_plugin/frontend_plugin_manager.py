@@ -91,7 +91,7 @@ class FrontendPluginManager:
             root_cert_file.seek(0)
             return root_cert_file.name
         else:
-            return True, None
+            return True
 
     def get_token(self) -> str:
         self.logger.info("Obtaining JWT access token...")
