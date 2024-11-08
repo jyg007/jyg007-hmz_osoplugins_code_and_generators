@@ -20,7 +20,7 @@ from typing import IO, Union
 
 import requests
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import ec, ed25519
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
 from oso_harmonize_plugins.common import crypt, errors
@@ -57,11 +57,53 @@ class FrontendPluginManager:
         logging.basicConfig(stream=sys.stdout, level=logging.INFO)
         self.logger = logging.getLogger(__name__)
 
+    def _sign(self, challenge: str = str(uuid.uuid4())) -> bytes:
+        """
+        Sign the challenge string and then convert the signature into a DER format.
+
+        Parameters:
+
+            challenge (`str`):
+
+                An unique challenge string.
+
+        Returns:
+
+            `bytes`:
+
+                A DER encoded signature as a byte string.
+        """
+        if isinstance(self.private_key, ed25519.Ed25519PrivateKey):
+            """
+            An ED25519 signature produces a 64-byte sequence which has to be converted
+            into the correct DER structure:
+
+            0x30 : DER Composite structure header
+            0x44 : length (68) of following payload
+            0x02 : type of payload (int)
+            0x20 : length (32) of (int) payload
+                 : 32-byte length payload (r), first half of ``hexsig``
+            0x02 : type of payload (int)
+            0x20 : length (32) of (int) payload
+                 : 32-byte length payload (s), second half of ``hexsig``
+            """
+            hexsig = self.private_key.sign(
+                bytes(challenge, "utf-8"),
+            ).hex()
+            return bytes.fromhex("30440220" + hexsig[:64] + "0220" + hexsig[64:])
+
+        elif isinstance(self.private_key, ec.EllipticCurvePrivateKey):
+            return self.private_key.sign(
+                data=bytes(challenge, "utf-8"),
+                signature_algorithm=ec.ECDSA(hashes.SHA256()),
+            )
+
+        else:
+            raise Exception(f"Key type not supported: {type(self.private_key)}")
+
     def _get_token(self) -> str:
         challenge = str(uuid.uuid4())
-        signature = self.private_key.sign(
-            bytes(challenge, "utf-8"), ec.ECDSA(hashes.SHA256())
-        )
+        signature = self._sign(challenge)
         data = {
             "client_id": "customer_api",
             "grant_type": "password",

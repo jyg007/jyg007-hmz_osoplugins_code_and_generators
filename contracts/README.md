@@ -30,11 +30,21 @@ The oso harmonize frontend plugin is used to import/export operations from withi
 - OpenTofu and required terraform providers (hpcr/null) which can be obtained via the OSO release archive
 
 ### Functional OSO user
-A functional user specific for OSO should be created within the Harmonize UI. This user will be used to import/export operations from within Harmonize. Note, the OSO harmonize plugin does not support the Ed25519 elliptic curve algorithm for the user.
+A functional user specific for OSO should be created within the Harmonize UI. This user will be used to import/export operations from within Harmonize.
 
 1. Generate a private key used for the functional user
+    1. Key generation using secp256k1 eliptic curve
 
     `openssl ecparam -genkey -name secp256k1 -noout -out privateKey.pem`
+
+    2. Key generation using secp256r1 eliptic curve
+
+    `openssl ecparam -genkey -name secp256r1 -noout -out privateKey.pem`
+
+    3. Key generation using ED25519 eliptic curve
+
+    `openssl genpkey -algorithm Ed25519 -out privateKey.pem`
+
 1. Generate a public key from the previously generated private key
 
     `openssl ec -in privateKey.pem -pubout -outform DER | openssl base64 -A -out publicKey.pem`
