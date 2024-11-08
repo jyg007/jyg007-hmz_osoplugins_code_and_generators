@@ -14,6 +14,38 @@ REGISTRY ?= us.icr.io
 NAMESPACE ?= dap-osc-dev
 TAG ?= latest
 
+PIP_COMPILE = CUSTOM_COMPILE_COMMAND='make pip-compile' pip-compile --quiet --strip-extras --allow-unsafe --generate-hashes $(PIP_COMPILE_UPGRADE)
+requirements.constraints.txt: pyproject.toml
+	$(PIP_COMPILE) \
+		--build-deps-for wheel \
+		--extra dependencies \
+		--extra test \
+		--output-file $@ $<
+
+requirements.txt: requirements.constraints.txt pyproject.toml
+	$(PIP_COMPILE) \
+		--extra dependencies \
+		--output-file $@ \
+		--constraint $^
+
+requirements.build.txt: requirements.constraints.txt pyproject.toml
+	$(PIP_COMPILE) \
+		--only-build-deps \
+		--build-deps-for wheel \
+		--output-file $@ \
+		--constraint $^
+
+hack/requirements.dev.txt: pyproject.toml
+	$(PIP_COMPILE) \
+		--extra dev \
+		--output-file $@ $<
+
+.PHONY: pip-compile
+pip-compile: requirements.constraints.txt requirements.txt requirements.build.txt
+
+.PHONY: generate
+generate: pip-compile
+
 build :
 	docker build \
 		. -t oso-harmonize-plugins:latest -t $(REGISTRY)/$(NAMESPACE)/oso-harmonize-plugins:$(TAG) -f Dockerfile --platform linux/s390x

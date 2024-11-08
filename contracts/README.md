@@ -51,7 +51,7 @@ A functional user specific for OSO should be created within the Harmonize UI. Th
 1. Within the Harmonize UI, create the functional user with the user public key from the content of the public key `publicKey.pem`.
 1. Obtain the base64 value used for the `SK` terraform variable within the contract
 
-    `base64 -i privateKey.pem`
+    `cat privateKey.pem | base64 -w0`
 
 ### Generate encrypted workload
 The encrypted workload will be used within OSO when deploying the frontend (LPAR1) components during the `init` process. Within the `frontend_plugin` directory:

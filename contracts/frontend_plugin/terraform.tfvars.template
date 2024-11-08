@@ -5,4 +5,3 @@ FRONTEND_PLUGIN_IMAGE="registry.control12.dap.local/oso/oso-harmonize-plugins@sh
 HMZ_SERVER=""
 VAULT_ID=""
 SK=""
-PUB=""
