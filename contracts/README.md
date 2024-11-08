@@ -65,6 +65,7 @@ The encrypted workload will be used within OSO when deploying the frontend (LPAR
     - `SK` - Base64 private key for OSO functional user account (see above)
     - `FRONTEND_PLUGIN_IMAGE` - Frontend plugin image with sha256 (see above)
     - `SEED` - Passphrase used to optionally encrypt the data being transferred between OSO and Harmonize (matches backend)
+    - `TOKEN_EXP` - Expiration time configured in Harmonize for the bearer token returned upon authentication
 1. Within the `contracts` directory, generate the encrypted workload:
 
     `./create-frontend.sh`

@@ -53,3 +53,9 @@ variable "ROOTCERT" {
   description = "Harmonize SSL server certification as base64 encoded (optional)"
   default = ""
 }
+
+variable "TOKEN_EXP" {
+  type = string
+  description = "Harmonize configured bearer token expiration (#h#m#s format)"
+  default = "4h0m0s"
+}

@@ -15,15 +15,17 @@ import logging
 import os
 import sys
 import tempfile
+import time
 import uuid
-from typing import IO, Union
+from functools import lru_cache
+from typing import IO, Tuple, Union
 
 import requests
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec, ed25519
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
-from oso_harmonize_plugins.common import crypt, errors
+from oso_harmonize_plugins.common import crypt, errors, utils
 
 
 class FrontendPluginManager:
@@ -53,6 +55,14 @@ class FrontendPluginManager:
         self.root_cert_b64 = os.environ.get("ROOTCERT")
         with tempfile.NamedTemporaryFile(delete=False) as root_cert_file:
             self.verify = self._write_root_cert(root_cert_file)
+
+        if "TOKEN_EXP" not in os.environ:
+            raise errors.ConfigError("TOKEN_EXP not found")
+        self.token_exp = os.environ.get("TOKEN_EXP")
+
+        self.token_exp_in_secs = utils.parse_wait_time(self.token_exp)
+        if self.token_exp_in_secs == 0:
+            raise errors.ConfigError("TOKEN_EXP format is invalid")
 
         logging.basicConfig(stream=sys.stdout, level=logging.INFO)
         self.logger = logging.getLogger(__name__)
@@ -101,7 +111,9 @@ class FrontendPluginManager:
         else:
             raise Exception(f"Key type not supported: {type(self.private_key)}")
 
-    def _get_token(self) -> str:
+    @lru_cache()  # Cache result - token + timestamp
+    def _get_token(self) -> Tuple[str, float]:
+        self.logger.info("Generating new JWT access token...")
         challenge = str(uuid.uuid4())
         signature = self._sign(challenge)
         data = {
@@ -124,7 +136,9 @@ class FrontendPluginManager:
         token = response_json.get("access_token")
         if not token:
             raise Exception("Could not get token from response json")
-        return token
+
+        self.logger.info("Successfully generated new JWT access token")
+        return token, time.time()
 
     def _write_root_cert(self, root_cert_file: IO[bytes]) -> Union[str, bool]:
         if self.root_cert_b64:
@@ -137,7 +151,12 @@ class FrontendPluginManager:
 
     def get_token(self) -> str:
         self.logger.info("Obtaining JWT access token...")
-        token = self._get_token()
+        token, exp_time = self._get_token()
+        if (
+            time.time() - (exp_time - int(os.environ.get("TOKEN_EXP_BUFF", 10)))
+        ) > self.token_exp_in_secs:  # gen new token if within 10 secs of expiry
+            self._get_token.cache_clear()
+            token, exp_time = self._get_token()
         self.logger.info("Successfully obtained JWT access token")
         return token
 

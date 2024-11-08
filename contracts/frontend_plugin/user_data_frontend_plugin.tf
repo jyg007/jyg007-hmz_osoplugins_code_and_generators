@@ -18,6 +18,7 @@ resource "local_file" "frontend_plugin_docker_compose" {
       HMZ_SERVER = var.HMZ_SERVER,
       ROOTCERT = var.ROOTCERT,
       SEED = var.SEED,
+      TOKEN_EXP = var.TOKEN_EXP
     } },
   )
   filename = "frontend_plugin/docker-compose.yml"
