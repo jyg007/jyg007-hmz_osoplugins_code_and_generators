@@ -33,9 +33,11 @@ dependencies = [
     "urllib3",
 ]
 dev = [
-    "cython",
-    "wheel",
-    "setuptools",
+    "docker",
+    "packaging",
+    "pip-tools",
+    "pre-commit",
+    "podman",
 ]
 test = [
     "coverage",
