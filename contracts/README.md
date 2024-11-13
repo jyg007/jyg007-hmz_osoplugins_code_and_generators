@@ -12,14 +12,14 @@
     gpg --import OSO_GPG_Key.pub
     export FINGERPRINT=$(gpg --fingerprint --with-colons | grep fpr | tr -d 'fpr:')
 
-    skopeo standalone-verify images/oso-harmonize-plugins/manifest.json us.icr.io/dap-osc-staging/oso-harmonize-plugins:v0.0.1 $FINGERPRINT images/oso-harmonize-plugins/signature-1
+    skopeo standalone-verify images/oso-harmonize-plugins/manifest.json us.icr.io/dap-osc-staging/oso-harmonize-plugins:v1.0.0 $FINGERPRINT images/oso-harmonize-plugins/signature-1
     ```
 1. Load Docker images
 
-    `skopeo copy dir:./images/oso-harmonize-plugins docker://registry.control23.dap.local/oso/oso-harmonize-plugins:v0.0.1 --dest-creds $REGISTRY_USER:$REGISTRY_PASSWORD --remove-signatures`
+    `skopeo copy dir:./images/oso-harmonize-plugins docker://registry.control23.dap.local/oso/oso-harmonize-plugins:v1.0.0 --dest-creds $REGISTRY_USER:$REGISTRY_PASSWORD --remove-signatures`
 1. Retrieve the digest of the loaded docker image:
 
-    `skopeo inspect docker://registry.control23.dap.local/oso/oso-harmonize-plugins:v0.0.1 --creds $REGISTRY_USER:$REGISTRY_PASSWORD | jq '.Name + "@" + .Digest'`
+    `skopeo inspect docker://registry.control23.dap.local/oso/oso-harmonize-plugins:v1.0.0 --creds $REGISTRY_USER:$REGISTRY_PASSWORD | jq '.Name + "@" + .Digest'`
 
 ## Frontend Plugin
 The oso harmonize frontend plugin is used to import/export operations from within Harmonize Core accessible from LPAR1 (hot).
