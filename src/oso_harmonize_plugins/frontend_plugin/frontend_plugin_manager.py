@@ -278,5 +278,5 @@ class FrontendPluginManager:
             os.remove(vault_file.name)
         self.logger.info("Bulk upload finished successfully")
 
-    def backend_status():
+    def backend_status(self):
         pass
