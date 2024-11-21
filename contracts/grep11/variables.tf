@@ -8,6 +8,10 @@
 # deposited with the U.S. Copyright Office
 #
 
+variable "PREFIX" {
+  type        = string
+}
+
 variable "IMAGE" {
   type        = string
   description = "GREP11 image name with registry"
@@ -35,21 +39,6 @@ variable "DEBUG" {
 variable "DOMAIN" {
   type        =  string
   description = "Crypto appliance domain"
-}
-
-variable "GREP11_CA_CERT" {
-  type        = string
-  description = "GREP11 CA certificate"
-}
-
-variable "GREP11_SERVER_KEY" {
-  type        = string
-  description = "GREP11 server key"
-}
-
-variable "GREP11_SERVER_CERT" {
-  type        = string
-  description = "GREP11 server certificate"
 }
 
 variable "C16_CLIENT_HOST" {
@@ -134,4 +123,9 @@ variable "SYSLOG_CLIENT_KEY" {
   type        = string
   sensitive   = true
   description = "Syslog server client key"
+}
+
+variable "CERT_VALIDITY_PERIOD" {
+  type = string
+  default = "720"
 }

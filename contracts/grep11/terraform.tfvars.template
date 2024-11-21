@@ -1,4 +1,5 @@
 # Grep11 Server Configuration
+PREFIX=""
 IMAGE="registry.control23.dap.local/oso/grep11-c16@sha256:"
 DOMAIN=""
 PORT="9876"

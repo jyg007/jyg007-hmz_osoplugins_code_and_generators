@@ -32,3 +32,5 @@ ${xorriso} -as mkisofs -o cloud-init -V cidata -J -r user-data meta-data vendor-
 popd || exit 1
 
 popd || exit 1
+
+echo "Certificates have been regenerated, update the backend grep11 CA cert, client key, and client certificate"

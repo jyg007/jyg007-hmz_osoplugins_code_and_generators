@@ -80,10 +80,7 @@ The encrypted workload will be used within OSO when deploying the frontend (LPAR
 Obtain the grep11-c16 image and copy it to the private registry, obtaining the sha256 of the image (used below).
 
 ### Generate grep11 keys and certificates
-The grep11 server and client keys/certificates can be generated from within the `grep11/certs` directory.
-1. Update the `prefix` with the correct value within the `server.cnf` file
-1. Generate the keys and certificates: `./gen.sh`
-1. The grep11ca.pem, grep11client.pem, and grep11client-key.pem will be used for the backend workload.
+The grep11 server and client keys/certificates will be generated from within the `grep11/certs` directory.
 
 ### Generate encrypted workload
 The encrypted workload will be used within OSO when deploying along with the backend services during a signing iteration process on LPAR3. Within the `grep11` directory:
@@ -91,10 +88,8 @@ The encrypted workload will be used within OSO when deploying along with the bac
 
     `cp terraform.tfvars.template terraform.tfvars`
 1. Edit the `terraform.tfvars` and assign values to the terraform variables
+    - `PREFIX` - Prefix used for OSO deployment
     - `IMAGE` - GREP11-C16 image with sha256 (see above)
-    - `GREP11_CA_CERT` - Grep11 CA certificate (see above)
-    - `GREP11_SERVER_KEY` - Grep11 server private key (see above)
-    - `GREP11_SERVER_CERT` - Grep11 server certificate (see above)
     - `DOMAIN` - Crypto appliance domain
     - `C16_CA_CERT` - Crypto appliance CA certificate
     - `C16_CLIENT_CERT` - Crypto appliance client certificate
@@ -113,6 +108,8 @@ The encrypted workload will be used within OSO when deploying along with the bac
 
     `./create-grep11.sh prefix`
 
+1. Use the grep11 ca certificate, client certificate and client key and place the values within the backend. Everytime the create-grep11.sh is ran, new certificates are generated.
+
 ## Backend
 
 ### Prereqs
@@ -128,6 +125,7 @@ The encrypted workload will be used within OSO when deploying along with the gre
 
     `cp terraform.tfvars.template terraform.tfvars`
 1. Edit the `terraform.tfvars` and assign values to the terraform variables
+    - `PREFIX` - Prefix used for OSO deployment
     - `BACKEND_PLUGIN_IMAGE` - Backend plugin image with sha256 (see above)
     - `SEED` - Passphrase used to optionally encrypt the data being transferred between OSO and Harmonize (matches frontend)
     - `COLD_BRIDGE_IMAGE` - Cold bridge image with sha256 (see above)
@@ -136,7 +134,6 @@ The encrypted workload will be used within OSO when deploying along with the gre
     - `VAULT_ID` - Vault ID used for cold vault operations
     - `NOTARY_MESSAGING_PUBLIC_KEY` - Notary messaging public key after genesis
     - `WORKLOAD_VOL_SEED` - Workload volume encryption seed
-    - `GREP11_ENDPOINT` - GREP11 backend service endpoint (ex. prefix-cs-backend-grep11.control23.dap.local:9876)
     - `GREP11_CA` - GREP11 CA certificate
     - `GREP11_CLIENT_KEY` - GREP11 client key
     - `GREP11_CLIENT_CERT` - GREP11 client certificate
