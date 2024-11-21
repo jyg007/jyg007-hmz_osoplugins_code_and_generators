@@ -83,6 +83,7 @@ Obtain the grep11-c16 image and copy it to the private registry, obtaining the s
 The grep11 server and client keys/certificates can be generated from within the `grep11/certs` directory.
 1. Update the `prefix` with the correct value within the `server.cnf` file
 1. Generate the keys and certificates: `./gen.sh`
+1. The grep11ca.pem, grep11client.pem, and grep11client-key.pem will be used for the backend workload.
 
 ### Generate encrypted workload
 The encrypted workload will be used within OSO when deploying along with the backend services during a signing iteration process on LPAR3. Within the `grep11` directory:
@@ -110,7 +111,7 @@ The encrypted workload will be used within OSO when deploying along with the bac
     - `SYSLOG_CLIENT_KEY` - Syslog client key
 1. Within the `contracts` directory, generate the encryptd workload:
 
-    `./create-grep11.sh <prefix>`
+    `./create-grep11.sh prefix`
 
 ## Backend
 
@@ -135,7 +136,7 @@ The encrypted workload will be used within OSO when deploying along with the gre
     - `VAULT_ID` - Vault ID used for cold vault operations
     - `NOTARY_MESSAGING_PUBLIC_KEY` - Notary messaging public key after genesis
     - `WORKLOAD_VOL_SEED` - Workload volume encryption seed
-    - `GREP11_ENDPOINT` - GREP11 backend service endpoint (ex. <prefix>-cs-backend-grep11.control23.dap.local:9876)
+    - `GREP11_ENDPOINT` - GREP11 backend service endpoint (ex. prefix-cs-backend-grep11.control23.dap.local:9876)
     - `GREP11_CA` - GREP11 CA certificate
     - `GREP11_CLIENT_KEY` - GREP11 client key
     - `GREP11_CLIENT_CERT` - GREP11 client certificate
