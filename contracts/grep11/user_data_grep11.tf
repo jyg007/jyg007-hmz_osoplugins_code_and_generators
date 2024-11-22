@@ -15,19 +15,19 @@ resource "local_file" "grep11_cfg" {
 }
 
 resource "local_file" "grep11_ca_cert" {
-  content = var.GREP11_CA_CERT
+  content = tls_self_signed_cert.grep11_ca_cert.cert_pem
   filename = "docker-compose/srv1/grep11ca.pem"
   file_permission = "0664"
 }
 
 resource "local_file" "grep11_server_key" {
-  content = var.GREP11_SERVER_KEY
+  content = tls_private_key.server_key.private_key_pem
   filename = "docker-compose/srv1/grep11server-key.pem"
   file_permission = "0664"
 }
 
 resource "local_file" "grep11_server_cert" {
-  content = var.GREP11_SERVER_CERT
+  content = tls_locally_signed_cert.server_cert.cert_pem
   filename = "docker-compose/srv1/grep11server.pem"
   file_permission = "0664"
 }

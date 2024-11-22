@@ -8,6 +8,10 @@
 # deposited with the U.S. Copyright Office
 #
 
+variable "PREFIX" {
+  type        = string
+}
+
 variable "DEBUG" {
   type        = bool
   description = "Create debug contracts, plaintext"
@@ -69,9 +73,10 @@ variable "HPCR_CERT" {
   default     = null
 }
 
-variable "GREP11_ENDPOINT" {
+variable "GREP11_PORT" {
   type = string
-  description = "GREP11 backend endpoint (ex. <prefix>-cs-backend-grep11.control23.dap.local:9876)"
+  description = "GREP11 backend endpoint port"
+  default = "9876"
 }
 
 variable "GREP11_CA" {

@@ -1,3 +1,5 @@
+PREFIX=""
+
 # Cold Vault Images
 BACKEND_PLUGIN_IMAGE="registry.control23.dap.local/oso/oso-harmonize-plugins@sha256:"
 COLD_BRIDGE_IMAGE="registry.control23.dap.local/metaco-ripple/vault-cold-bridge@sha256:"

@@ -67,9 +67,10 @@ resource "hpcr_tgz" "workload" {
 }
 
 locals {
+  grep11_endpoint = format("%s-cs-backend-grep11.control23.dap.local:%s", var.PREFIX, var.GREP11_PORT)
   ibm_cfg = <<-EOT
     system = onprem
-    endpoint = ${var.GREP11_ENDPOINT}
+    endpoint = ${local.grep11_endpoint}
   EOT
   compose = {
     "compose" : {
