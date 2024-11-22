@@ -13,7 +13,6 @@ WORKLOAD_VOL_SEED="vaultseed1"
 STANDALONE=false
 
 # Grep11 Configuration
-GREP11_ENDPOINT="prefix-cs-backend-grep11.control23.dap.local:9876"
 GREP11_CA=<<-EOT
 EOT
 GREP11_CLIENT_KEY=<<-EOT
