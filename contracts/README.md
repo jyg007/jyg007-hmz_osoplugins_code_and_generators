@@ -153,7 +153,7 @@ The encrypted workload will be used within OSO when deploying along with the gre
 
     `./create-backend.sh`
 
-## Registry Cold Vault Process
+## Cold Vault Registration Process
 The cold vault will need to be registered as part of a manual process prior to deploying the workloads with OSO. The process requires the stand-alone deployments of both the GREP11 and Backend Services.
 
 ### Prereqs
