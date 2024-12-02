@@ -55,7 +55,7 @@ Create a functional user specific for OSO using the Harmonize UI. The user will 
     `cat privateKey.pem | base64 -w0`
 
 ### Generate encrypted workload
-{{site.data.keyword.hposc_short}} uses the encrypted workload to deploy the frontend (LPAR1) components during the `init` process, within the `frontend_plugin` directory:
+OSO uses the encrypted workload to deploy the frontend (LPAR1) components during the `init` process, within the `frontend_plugin` directory:
 
 1. Copy the terraform template
 
@@ -65,7 +65,7 @@ Create a functional user specific for OSO using the Harmonize UI. The user will 
     - `VAULTID` - Vault ID used for cold vault operations. If you are using a new vault, then generate a new uuid.
     - `SK` - Base64 private key for OSO functional user account
     - `FRONTEND_PLUGIN_IMAGE` - Frontend plugin image with sha256
-    - `SEED` - Passphrase used to optionally encrypt the data being transferred between {{site.data.keyword.hposc_short}} and Harmonize. The passphrase must match with the backend.
+    - `SEED` - Passphrase used to optionally encrypt the data being transferred between OSO and Harmonize. The passphrase must match with the backend.
     - `TOKEN_EXP` - Expiration time configured in Harmonize for the bearer token returned upon authentication
 1. Navigate to the `contracts` directory and generate the encrypted workload:
 
@@ -234,8 +234,8 @@ Before deploying workload with OSO, you must register the cold vault manually. T
     ```
 1. Ensure the backend workload used within OSO includes the `STANDALONE` variable. The variable must be set to false.
 
-## {{site.data.keyword.hposc_short}} Harmonize Encrypted Workloads
+## OSO Harmonize Encrypted Workloads
 
-{{site.data.keyword.hposc_short}} requires plugin encrypted workloads as part of it's orchestration process, such as the `FRONTEND_WORKLOADS` and `BACKEND_WORKLOADS`. After generating the encrypted workloads using the `create_frontend.sh` `create_backend.sh`, and `create_grep11.sh`, the workloads can be displayed by running the following commmand and used directly in OSO's `terraform.tfvars` file:
+OSO requires plugin encrypted workloads as part of it's orchestration process, such as the `FRONTEND_WORKLOADS` and `BACKEND_WORKLOADS`. After generating the encrypted workloads using the `create_frontend.sh` `create_backend.sh`, and `create_grep11.sh`, the workloads can be displayed by running the following commmand and used directly in OSO's `terraform.tfvars` file:
 
 `./get_workloads.sh`
