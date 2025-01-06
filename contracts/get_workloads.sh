@@ -21,14 +21,14 @@ if [ ! -f $BACKEND_FILE ]; then
   echo "backend file does not exist: $BACKEND_FILE"
   exit 1
 fi
-BACKEND=$(grep "workload:" "$BACKEND_FILE" | awk '{print $2}')
+BACKEND=$(cat "$BACKEND_FILE")
 
 GREP11_FILE="./output/grep11/user-data"
 if [ ! -f $GREP11_FILE ]; then
   echo "backend file does not exist: $GREP11_FILE"
   exit 1
 fi
-GREP11=$(grep "workload:" "$GREP11_FILE" | awk '{print $2}')
+GREP11=$(cat "$GREP11_FILE")
 
 cat <<-EOT
 # Hyper Protect Encrypted Workloads
@@ -49,7 +49,7 @@ BACKEND_WORKLOADS=[
       volume_name = "vault_vol",
       env_seed = "vaultseed2",
       prev_seed = "",
-      volume_path = "/var/lib/libvirt/images/images/vault-data.qcow2"
+      volume_path = "/var/lib/libvirt/images/oso/vault-data.qcow2"
     }
   },
   {

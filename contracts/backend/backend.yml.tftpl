@@ -9,10 +9,6 @@ services:
       # Passphrase: "{{EMPTY}}" is needed so that the bridge data is not cyphered and can be managed by OSO
       Passphrase: "${tpl.passphrase}"
     restart: always
-%{ if tpl.standalone ~}
-    ports:
-      - "8080:8080"
-%{ endif ~}
     volumes:
       - "/mnt/data:/App_Data"
 
@@ -38,7 +34,6 @@ services:
       # This comes from the docker container that is spun up above. If it's normal vault, then it would be API end point.
       HARMONIZE_CORE_ENDPOINT: http://cold-bridge:8080/internal/v1
     restart: always
-%{ if ! tpl.standalone ~}
   backend-plugin:
     image: ${tpl.backend_plugin_image}
     depends_on:
@@ -58,4 +53,3 @@ services:
       BACKEND_KEY: $${BACKEND_PLUGIN_KEY}
       BACKEND_CERT: $${BACKEND_PLUGIN_CERT}
     restart: always
-%{ endif ~}

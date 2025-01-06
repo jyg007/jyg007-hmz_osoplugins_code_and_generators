@@ -3,12 +3,6 @@ PREFIX=""
 IMAGE="registry.control23.dap.local/oso/grep11-c16@sha256:"
 DOMAIN=""
 PORT="9876"
-GREP11_CA_CERT=<<-EOT
-EOT
-GREP11_SERVER_KEY=<<-EOT
-EOT
-GREP11_SERVER_CERT=<<-EOT
-EOT
 
 # C16 Configuration
 C16_CA_CERT=<<-EOT
@@ -16,20 +10,4 @@ EOT
 C16_CLIENT_CERT=<<-EOT
 EOT
 C16_CLIENT_KEY=<<-EOT
-EOT
-
-#### Below configuration only required for stand alone (non-oso) based deployments ####
-REGISTRY_URL="registry.control23.dap.local"
-REGISTRY_USERNAME="registryuser"
-REGISTRY_PASSWORD=""
-REGISTRY_CA=""
-
-# Logging Configuration
-SYSLOG_HOSTNAME="logging.control23.dap.local"
-SYSLOG_PORT=6514
-SYSLOG_SERVER_CERT=<<-EOT
-EOT
-SYSLOG_CLIENT_CERT=<<-EOT
-EOT
-SYSLOG_CLIENT_KEY=<<-EOT
 EOT

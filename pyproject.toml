@@ -40,7 +40,7 @@ dev = [
     "podman",
 ]
 test = [
-    "coverage==7.6.8",
+    "coverage",
     "pip",
     "pytest",
     "pytest-cov",

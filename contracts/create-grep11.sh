@@ -9,26 +9,18 @@
 # deposited with the U.S. Copyright Office
 #
 
-if [ $# -ne 1 ]; then
-  echo "Missing prefix argument"
-  exit 1
-fi
-
-xorriso="/usr/bin/xorriso"
+. ./common.sh
+exportTF || builtin exit $?
+exportCP || builtin exit $?
 
 contract_root=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 pushd "$contract_root" || exit 1
 
 pushd grep11 || exit 1
-tofu init && tofu destroy -auto-approve && tofu apply -auto-approve
-cp -rf grep11-c16.yml ../output/grep11/user-data
-popd || exit 1
-
-pushd output/grep11 || exit 1
-touch vendor-data
-echo "local-hostname: $1-cs-backend-grep11" > meta-data
-${xorriso} -as mkisofs -o cloud-init -V cidata -J -r user-data meta-data vendor-data
+# shellcheck disable=SC2154
+${tf} init && ${tf} destroy -auto-approve && ${tf} apply -auto-approve
+${CP} -rf grep11-c16.yml ../output/grep11/user-data
 popd || exit 1
 
 popd || exit 1

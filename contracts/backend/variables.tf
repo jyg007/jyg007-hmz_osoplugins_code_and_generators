@@ -18,12 +18,6 @@ variable "DEBUG" {
   default     = false
 }
 
-variable "STANDALONE" {
-  type        = bool
-  description = "Create contract as standalone (enable bridge port and disable plugin)"
-  default     = false
-}
-
 variable "SEED" {
   type        = string
   description = "Encrypt data through the iteration pipeline (should be the same value as frontend plugin)"
@@ -97,61 +91,6 @@ variable "GREP11_CLIENT_CERT" {
 variable "WORKLOAD_VOL_SEED" {
   type = string
   description = "Workload volume encryption seed"
-}
-
-### Only required for stand-alone (without OSO) deployments ###
-
-variable "ENV_VOL_SEED" {
-  type = string
-  description = "Environment volume encryption seed"
-}
-
-variable "REGISTRY_URL" {
-  type        = string
-  description = "Registry URL to pull an image"
-}
-
-variable "REGISTRY_USERNAME" {
-  type        = string
-  description = "Username to access your registry"
-}
-
-variable "REGISTRY_PASSWORD" {
-  type        = string
-  description = "Password to access your registry"
-  sensitive   = true
-}
-
-variable "REGISTRY_CA" {
-  type        = string
-  description = "Registry certificate authority in base64 (optional for private registries)"
-  default     = ""
-}
-
-variable "SYSLOG_HOSTNAME" {
-  type        = string
-  description = "Syslog server hostname"
-}
-
-variable "SYSLOG_PORT" {
-  type        = number
-  description = "Syslog server port number"
-}
-
-variable "SYSLOG_SERVER_CERT" {
-  type        = string
-  description = "Syslog server certificate"
-}
-
-variable "SYSLOG_CLIENT_CERT" {
-  type        = string
-  description = "Syslog server client certificate"
-}
-
-variable "SYSLOG_CLIENT_KEY" {
-  type        = string
-  sensitive   = true
-  description = "Syslog server client key"
 }
 
 variable "PORT" {

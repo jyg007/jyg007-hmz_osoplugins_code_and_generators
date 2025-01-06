@@ -43,7 +43,6 @@ resource "local_file" "docker_compose" {
       vault_id = var.VAULT_ID,
       passphrase = var.PASSPHRASE,
       notary_messaging_public_key = var.NOTARY_MESSAGING_PUBLIC_KEY,
-      standalone = var.STANDALONE,
       seed = var.SEED,
     } },
   )
@@ -78,29 +77,25 @@ locals {
     }
   }
   workload = merge(local.workload_template, local.compose)
-  contract = yamlencode({
-    "env" : local.env,
-    "workload" : local.workload
-  })
 }
 
 # In this step we encrypt the fields of the contract and sign the env and workload field. The certificate to execute the
 # encryption it built into the provider and matches the latest HPCR image. If required it can be overridden.
 # We use a temporary, random keypair to execute the signature. This could also be overriden.
-resource "hpcr_contract_encrypted" "contract" {
-  contract  = local.contract
+resource "hpcr_text_encrypted" "contract" {
+  text      = yamlencode(local.workload)
   cert      = var.HPCR_CERT == "" ? null : var.HPCR_CERT
 }
 
 resource "local_file" "contract" {
   count    = var.DEBUG ? 1 : 0
-  content  = local.contract
+  content  = yamlencode(local.workload)
   filename = "backend_plain.yml"
   file_permission = "0664"
 }
 
 resource "local_file" "contract_encrypted" {
-  content  = hpcr_contract_encrypted.contract.rendered
+  content  = hpcr_text_encrypted.contract.rendered
   filename = "backend.yml"
   file_permission = "0664"
 }

@@ -9,13 +9,18 @@
 # deposited with the U.S. Copyright Office
 #
 
+. ./common.sh
+exportTF || builtin exit $?
+exportCP || builtin exit $?
+
 contract_root=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 pushd "$contract_root" || exit 1
 
 pushd frontend_plugin || exit 1
-tofu init -upgrade && tofu destroy -auto-approve && tofu apply -auto-approve
-cp frontend_plugin.yml ../output/frontend
+# shellcheck disable=SC2154
+${tf} init && ${tf} destroy -auto-approve && ${tf} apply -auto-approve
+${CP} -rf frontend_plugin.yml ../output/frontend
 popd || exit 1
 
 popd || exit 1

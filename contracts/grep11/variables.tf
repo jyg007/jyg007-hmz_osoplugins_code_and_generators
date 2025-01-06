@@ -76,55 +76,6 @@ variable "C16_CA_CERT" {
   description = "Crypto appliance CA certificate"
 }
 
-### Only required for stand-alone (without OSO) deployments ###
-
-variable "REGISTRY_URL" {
-  type        = string
-  description = "Registry URL to pull an image"
-}
-
-variable "REGISTRY_USERNAME" {
-  type        = string
-  description = "Username to access your registry"
-}
-
-variable "REGISTRY_PASSWORD" {
-  type        = string
-  description = "Password to access your registry"
-}
-
-variable "REGISTRY_CA" {
-  type        = string
-  description = "Registry certificate authority in base64 (optional for private registries)"
-  default     = ""
-}
-
-variable "SYSLOG_HOSTNAME" {
-  type        = string
-  description = "Syslog server hostname"
-}
-
-variable "SYSLOG_PORT" {
-  type        = number
-  description = "Syslog server port number"
-}
-
-variable "SYSLOG_SERVER_CERT" {
-  type        = string
-  description = "Syslog server certificate"
-}
-
-variable "SYSLOG_CLIENT_CERT" {
-  type        = string
-  description = "Syslog server client certificate"
-}
-
-variable "SYSLOG_CLIENT_KEY" {
-  type        = string
-  sensitive   = true
-  description = "Syslog server client key"
-}
-
 variable "CERT_VALIDITY_PERIOD" {
   type = string
   default = "720"

@@ -9,22 +9,18 @@
 # deposited with the U.S. Copyright Office
 #
 
-xorriso="/usr/bin/xorriso"
+. ./common.sh
+exportTF || builtin exit $?
+exportCP || builtin exit $?
 
 contract_root=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 pushd "$contract_root" || exit 1
 
 pushd backend || exit 1
-tofu init && tofu destroy -auto-approve && tofu apply -auto-approve
-cp -rf backend.yml ../output/backend/user-data
-popd || exit 1
-
-pushd output/backend || exit 1
-touch vendor-data
-echo "local-hostname: backend" > meta-data
-${xorriso} -as mkisofs -o cloud-init -V cidata -J -r user-data meta-data vendor-data
-cloud-localds cloud-init -V vendor-data user-data meta-data
+# shellcheck disable=SC2154
+${tf} init && ${tf} destroy -auto-approve && ${tf} apply -auto-approve
+${CP} -rf backend.yml ../output/backend/user-data
 popd || exit 1
 
 popd || exit 1
