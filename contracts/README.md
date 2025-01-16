@@ -34,16 +34,16 @@ The Offline Signing Orchestrator frontend plugin performs import or export opera
 ### Create a functional OSO user
 Using the Ripple Custody UI, create a functional user specifically for OSO. The user will be used to perform import or export operations to and from Ripple Custody.
 
-1. Generate a private key for the functional user by executing one of the following commands based on the eliptic curve algorithem required.
-    1. Generate a key using secp256k1 eliptic curve.
+1. Generate a private key for the functional user by executing one of the following commands based on the elliptic curve algorithm required.
+    1. Generate a key using secp256k1 elliptic curve.
 
     `openssl ecparam -genkey -name secp256k1 -noout -out privateKey.pem`
 
-    2. Generate a key using secp256r1 eliptic curve.
+    2. Generate a key using secp256r1 elliptic curve.
 
     `openssl ecparam -genkey -name secp256r1 -noout -out privateKey.pem`
 
-    3. Generate a key using ED25519 eliptic curve.
+    3. Generate a key using ED25519 elliptic curve.
 
     `openssl genpkey -algorithm Ed25519 -out privateKey.pem`
 
@@ -64,7 +64,7 @@ OSO uses the encrypted workload to deploy the frontend (LPAR1) components during
     `cp terraform.tfvars.template terraform.tfvars`
 1. Edit the `terraform.tfvars` file and assign values to the following terraform variables:
     - `HMZ_SERVER` - Ripple Custody frontend endpoint
-    - `VAULTID` - Vault ID used for cold vault operations. If you are using a new vault, then generate a new uuid.
+    - `VAULT_ID` - Vault ID used for cold vault operations. If you are using a new vault, then generate a new uuid.
     - `SK` - Base64 private key for OSO functional user account
     - `FRONTEND_PLUGIN_IMAGE` - Frontend plugin image with sha256
     - `SEED` - Passphrase used to optionally encrypt the data being transferred between OSO and Ripple Custody. The passphrase must match with the backend.
