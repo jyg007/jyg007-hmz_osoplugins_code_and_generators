@@ -1,5 +1,8 @@
 # Offline Signing Orchestrator Ripple Custody Plugins
 
+## Overview
+This function provides the integration of IBM Hyper Protect Offline Signing Orchestrator with the Ripple Custody product for the purposes of reviewing, approving, and automating the cold signing process of digital transactions originating in Ripple Custody.  For more information, please see the [IBM Hyper Protect Offline Signing Orchestrator product documentation](https://www.ibm.com/docs/en/hpdaoso/1.3.x).
+
 ## Verify the Offline Signing Orchestrator Plugin image
 
 ### Prerequisites
