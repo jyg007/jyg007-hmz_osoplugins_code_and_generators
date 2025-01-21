@@ -48,11 +48,11 @@ generate: pip-compile
 
 build :
 	docker build \
-		. -t oso-harmonize-plugins:latest -t $(REGISTRY)/$(NAMESPACE)/oso-harmonize-plugins:$(TAG) -f Dockerfile --platform linux/s390x
+		. -t oso-harmonize-plugins:latest -t $(REGISTRY)/$(NAMESPACE)/oso-harmonize-plugins:$(TAG) -f Dockerfile --platform linux/s390x --provenance=false
 
 debug : build
 	docker build \
-                . -t oso-harmonize-plugins-dev:latest -t $(REGISTRY)/$(NAMESPACE)/oso-harmonize-plugins-dev:$(TAG) -f Dockerfile.debug --platform linux/s390x
+                . -t oso-harmonize-plugins-dev:latest -t $(REGISTRY)/$(NAMESPACE)/oso-harmonize-plugins-dev:$(TAG) -f Dockerfile.debug --platform linux/s390x --provenance=false
 
 ifdef HARMONIZE_PLUGINS_TEST_RESULTS
 VOL_OPTS ::= -v $(HARMONIZE_PLUGINS_TEST_RESULTS):/tests/results:rw,z
