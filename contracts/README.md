@@ -157,6 +157,10 @@ Before deploying workloads with OSO, you must register the cold vault manually. 
 1. Create an empty vault-data.qcow2 image:
 
     `sudo qemu-img create -f qcow2 /var/lib/libvirt/images/oso/vault-data.qcow2 10G`
+1. Ensure the qcow2 has the correct libvirt read/write ownership
+1. Refresh the pool:
+
+    `virsh pool-refresh --pool images`
 1. After deploying the Conductor and initializing the frontend components, run an empty signing iteration:
 
     `oso_cli.py <prefix> operator --cert <admin-cert> --key <admin-key> --cacert <cacert> run --allow_empty`
@@ -168,6 +172,7 @@ Before deploying workloads with OSO, you must register the cold vault manually. 
         "signedPayload": "CqkHC..."
     }
     ```
+1. OSO iteration should complete successfully
 
 ### Vault Creation
 1. Within the Ripple Custody UI, create a new vault with the der base64 public key signature obtained above and the vault id specified within the contracts.
