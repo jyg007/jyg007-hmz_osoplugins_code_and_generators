@@ -173,6 +173,7 @@ Before deploying workloads with OSO, you must register the cold vault manually. 
     }
     ```
 1. OSO iteration should complete successfully
+1. Take a backup of volume `vault-data.qcow2`. For disaster recovery planning purposes, this volume is critical and would need to be restored in order to resume signing operations.
 
 ### Vault Creation
 1. Within the Ripple Custody UI, create a new vault with the der base64 public key signature obtained above and the vault id specified within the contracts.
