@@ -2,6 +2,7 @@
 FRONTEND_PLUGIN_IMAGE="registry.control12.dap.local/oso/oso-harmonize-plugins@sha256:"
 
 # Harmonize
-HMZ_SERVER=""
+HMZ_AUTH_HOSTNAME=""
+HMZ_API_HOSTNAME=""
 VAULT_ID=""
 SK=""

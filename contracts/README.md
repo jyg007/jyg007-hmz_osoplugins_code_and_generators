@@ -66,7 +66,8 @@ OSO uses the encrypted workload to deploy the frontend (LPAR1) components during
 
     `cp terraform.tfvars.template terraform.tfvars`
 1. Edit the `terraform.tfvars` file and assign values to the following terraform variables:
-    - `HMZ_SERVER` - Ripple Custody frontend endpoint
+    - `HMZ_AUTH_HOSTNAME` - Ripple Custody frontend auth hostname
+    - `HMZ_API_HOSTNAME` - Ripple Custody frontend api hostname
     - `VAULT_ID` - Vault ID used for cold vault operations. If you are using a new vault, then generate a new uuid.
     - `SK` - Base64 private key for OSO functional user account
     - `FRONTEND_PLUGIN_IMAGE` - Frontend plugin image with sha256
