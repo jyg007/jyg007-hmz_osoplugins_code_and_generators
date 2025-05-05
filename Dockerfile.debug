@@ -38,7 +38,7 @@ COPY /requirements*.txt /tmp
 RUN --mount=type=secret,id=netrc,target=${HOME}/.netrc,mode=0600 \
     --mount=type=cache,id=pipcache,target=${PIP_CACHE_DIR} \
     python3.12 -m venv --without-pip /opt/venv \
-    && pip3.12 --python /opt/venv install --requirement /tmp/requirements.constraints.txt \
+    && pip3.12 --python /opt/venv install --no-deps --requirement /tmp/requirements.constraints.txt \
     && pip3.12 --python /opt/venv uninstall -y oso_harmonize_plugins \
     && pip3.12 --python /opt/venv install -e /src
 
