@@ -43,9 +43,14 @@ variable "VAULT_ID" {
   description = "Harmonize vault id"
 }
 
-variable "HMZ_SERVER" {
+variable "HMZ_AUTH_HOSTNAME" {
   type = string
-  description = "Harmonize endpoint containing no protocol or path"
+  description = "Harmonize auth hostname containing no protocol or path"
+}
+
+variable "HMZ_API_HOSTNAME" {
+  type = string
+  description = "Harmonize api hostname containing no protocol or path"
 }
 
 variable "ROOTCERT" {

@@ -42,9 +42,13 @@ class FrontendPluginManager:
             )
         ).decode("utf-8")
 
-        if "HMZ_SERVER" not in os.environ:
-            raise errors.ConfigError("HMZ_SERVER not found")
-        self.hmz_server = os.environ["HMZ_SERVER"]
+        if "HMZ_AUTH_HOSTNAME" not in os.environ:
+            raise errors.ConfigError("HMZ_AUTH_HOSTNAME not found")
+        self.hmz_auth_hostname = os.environ["HMZ_AUTH_HOSTNAME"]
+
+        if "HMZ_API_HOSTNAME" not in os.environ:
+            raise errors.ConfigError("HMZ_API_HOSTNAME not found")
+        self.hmz_api_hostname = os.environ["HMZ_API_HOSTNAME"]
 
         if "VAULTID" not in os.environ:
             raise errors.ConfigError("VAULTID not found")
@@ -125,7 +129,7 @@ class FrontendPluginManager:
         }
 
         response = requests.post(
-            f"https://auth.{self.hmz_server}/token",
+            f"https://{self.hmz_auth_hostname}/token",
             data=data,
             headers={"Content-Type": "application/x-www-form-urlencoded"},
             verify=self.verify,
@@ -163,7 +167,7 @@ class FrontendPluginManager:
     def bulk_download(self) -> list:
         self.logger.info("Performing bulk download from frontend")
         token = self.get_token()
-        url = f"https://api.{self.hmz_server}/v1/vaults/{self.vault_id}/operations/prepared"
+        url = f"https://{self.hmz_api_hostname}/v1/vaults/{self.vault_id}/operations/prepared"
         response = requests.get(
             url=url,
             headers={"Authorization": "Bearer " + token},
@@ -266,7 +270,7 @@ class FrontendPluginManager:
 
             files = {"files": open(vault_file.name, "rb")}
             response = requests.post(
-                url=f"https://api.{self.hmz_server}/v1/vaults/operations/signed",
+                url=f"https://{self.hmz_api_hostname}/v1/vaults/operations/signed",
                 headers={"Authorization": "Bearer " + token},
                 files=files,
                 verify=self.verify,

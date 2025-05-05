@@ -15,7 +15,8 @@ resource "local_file" "frontend_plugin_docker_compose" {
       image = var.FRONTEND_PLUGIN_IMAGE,
       SK = var.SK,
       VAULTID = var.VAULT_ID,
-      HMZ_SERVER = var.HMZ_SERVER,
+      HMZ_AUTH_HOSTNAME = var.HMZ_AUTH_HOSTNAME,
+      HMZ_API_HOSTNAME = var.HMZ_API_HOSTNAME,
       ROOTCERT = var.ROOTCERT,
       SEED = var.SEED,
       TOKEN_EXP = var.TOKEN_EXP
