@@ -14,6 +14,10 @@ REGISTRY ?= us.icr.io
 NAMESPACE ?= dap-osc-dev
 TAG ?= latest
 
+ifdef PIP_UPGRADE
+PIP_COMPILE_UPGRADE := --upgrade
+endif
+
 PIP_COMPILE = CUSTOM_COMPILE_COMMAND='make pip-compile' pip-compile --quiet --strip-extras --allow-unsafe --generate-hashes $(PIP_COMPILE_UPGRADE)
 requirements.constraints.txt: pyproject.toml
 	$(PIP_COMPILE) \
