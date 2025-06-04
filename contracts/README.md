@@ -95,11 +95,15 @@ The encrypted workload will be used within OSO when deploying along with the bac
     `cp terraform.tfvars.template terraform.tfvars`
 1. Edit the `terraform.tfvars` file and assign values to the following terraform variables:
     - `PREFIX` - Prefix used for OSO deployment
+    - `STATIC_IP` - true for releases OSO 1.4 and higher where static IP addresses are used, otherwise set to false
     - `IMAGE` - GREP11-C16 image with sha256 (see above)
     - `DOMAIN` - Crypto appliance domain
     - `C16_CA_CERT` - Crypto appliance CA certificate (certs/ca.pem)
     - `C16_CLIENT_CERT` - Crypto appliance client certificate (certs/c16client.pem)
     - `C16_CLIENT_KEY` - Crypto appliance client key (certs/c16client-key.pem)
+    - `C16_CLIENT_HOST` - Crypto appliance host IP address - only set if default value (192.168.128.4) is not correct
+        - Note: for releases prior to OSO 1.4 that do not support static IP addresses, the crypto appliance IP address
+          will be on a different subnet (eg 192.168.7.4)
 1. To generate the encrypted workload, change to the `contracts` directory and run:
 
     `./create-grep11.sh`
@@ -124,6 +128,7 @@ The encrypted workload will be used within OSO when deploying along with the GRE
     `cp terraform.tfvars.template terraform.tfvars`
 1. Edit the `terraform.tfvars` file and assign values to the following terraform variables:
     - `PREFIX` - Prefix used for OSO deployment
+    - `STATIC_IP` - true for releases OSO 1.4 and higher where static IP addresses are used, otherwise set to false
     - `BACKEND_PLUGIN_IMAGE` - Backend plugin image with sha256 (see above)
     - `SEED` - Passphrase used to optionally encrypt the data being transferred between OSO and Ripple Custody (matches frontend)
     - `COLD_BRIDGE_IMAGE` - Cold bridge image with sha256 (see above)

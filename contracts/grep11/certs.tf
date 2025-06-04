@@ -52,6 +52,8 @@ resource "tls_cert_request" "server_cert" {
 
   dns_names = [format("%s-cs-backend-grep11.control23.dap.local:%s", var.PREFIX, var.PORT), format("%s-cs-backend-grep11.control23.dap.local", var.PREFIX)]
 
+  ip_addresses = var.STATIC_IP ? [for ip in var.STATIC_IP_ADDRS : ip if length(ip) > 0] : null
+
   subject {
     common_name  = "grep11-c16.control23.dap.local"
     organization = "HPS"

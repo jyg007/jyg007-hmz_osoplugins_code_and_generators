@@ -43,7 +43,7 @@ variable "DOMAIN" {
 
 variable "C16_CLIENT_HOST" {
   type        = string
-  default     = "192.168.7.4"
+  default     = "192.168.128.4"
   description = "Crypto appliance host endpoint"
 }
 
@@ -79,4 +79,16 @@ variable "C16_CA_CERT" {
 variable "CERT_VALIDITY_PERIOD" {
   type = string
   default = "720"
+}
+
+variable "STATIC_IP" {
+  type        = bool
+  description = "Deploying via OSO release that supports static IP"
+  default     = true
+}
+
+variable "STATIC_IP_ADDRS" {
+  type        = list(string)
+  description = "Static IP addresses assigned to grep11 VM"
+  default     = ["192.168.64.21", "192.168.96.21", "192.168.128.21"]
 }
