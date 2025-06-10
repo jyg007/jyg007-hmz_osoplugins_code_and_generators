@@ -104,3 +104,9 @@ variable "PORT" {
   description = "External port number for api"
   default     = "4000"
 }
+
+variable "STATIC_IP" {
+  type        = bool
+  description = "Deploying via OSO release that supports static IP"
+  default     = true
+}
