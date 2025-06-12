@@ -1,4 +1,5 @@
 PREFIX=""
+STATIC_IP=true
 
 # Cold Vault Images
 BACKEND_PLUGIN_IMAGE="registry.control23.dap.local/oso/oso-harmonize-plugins@sha256:"

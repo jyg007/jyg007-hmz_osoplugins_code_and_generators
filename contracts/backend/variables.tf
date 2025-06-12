@@ -67,6 +67,12 @@ variable "HPCR_CERT" {
   default     = null
 }
 
+variable "GREP11_HOST" {
+  type = string
+  description = "GREP11 backend endpoint"
+  default = "192.168.96.21"
+}
+
 variable "GREP11_PORT" {
   type = string
   description = "GREP11 backend endpoint port"
@@ -97,4 +103,10 @@ variable "PORT" {
   type        = string
   description = "External port number for api"
   default     = "4000"
+}
+
+variable "STATIC_IP" {
+  type        = bool
+  description = "Deploying via OSO release that supports static IP"
+  default     = true
 }
