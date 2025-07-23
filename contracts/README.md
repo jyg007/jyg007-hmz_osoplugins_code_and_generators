@@ -15,15 +15,15 @@ This function provides the integration of IBM Hyper Protect Offline Signing Orch
     gpg --import OSO_GPG_Key.pub
     export FINGERPRINT=$(gpg --fingerprint --with-colons | grep fpr | tr -d 'fpr:')
 
-    skopeo standalone-verify images/oso-harmonize-plugins/manifest.json us.icr.io/dap-osc-staging/oso-harmonize-plugins:v1.0.1 $FINGERPRINT images/oso-harmonize-plugins/signature-1
+    skopeo standalone-verify images/oso-harmonize-plugins/manifest.json us.icr.io/dap-osc-staging/oso-harmonize-plugins:v1.0.2 $FINGERPRINT images/oso-harmonize-plugins/signature-1
     ```
 1. Load the docker images.
 
-    `skopeo copy dir:./images/oso-harmonize-plugins docker://registry.control23.dap.local/oso/oso-harmonize-plugins:v1.0.1 --dest-creds $REGISTRY_USER:$REGISTRY_PASSWORD --remove-signatures`
+    `skopeo copy dir:./images/oso-harmonize-plugins docker://registry.control23.dap.local/oso/oso-harmonize-plugins:v1.0.2 --dest-creds $REGISTRY_USER:$REGISTRY_PASSWORD --remove-signatures`
 
 1. Retrieve and note the digest of the loaded docker image.  The digest will be needed when setting the FRONTEND_PLUGIN_IMAGE and BACKEND_PLUGIN_IMAGE variables within the terraform.tfvars files as described in later sections of this document.
 
-    `skopeo inspect docker://registry.control23.dap.local/oso/oso-harmonize-plugins:v1.0.1 --creds $REGISTRY_USER:$REGISTRY_PASSWORD | jq '.Name + "@" + .Digest'`
+    `skopeo inspect docker://registry.control23.dap.local/oso/oso-harmonize-plugins:v1.0.2 --creds $REGISTRY_USER:$REGISTRY_PASSWORD | jq '.Name + "@" + .Digest'`
 
 ## Frontend Plugin
 The Offline Signing Orchestrator frontend plugin performs import or export operations to or from the Ripple Custody core which is accessible from LPAR1 (hot).
