@@ -10,6 +10,7 @@
 
 variable "PREFIX" {
   type        = string
+  default = ""
 }
 
 variable "DEBUG" {
@@ -18,7 +19,7 @@ variable "DEBUG" {
   default     = false
 }
 
-variable "SEED" {
+variable "OSOENCRYPTIONPASS" {
   type        = string
   description = "Encrypt data through the iteration pipeline (should be the same value as frontend plugin)"
   default     = ""

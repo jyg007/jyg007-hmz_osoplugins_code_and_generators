@@ -43,7 +43,7 @@ resource "local_file" "docker_compose" {
       vault_id = var.VAULT_ID,
       passphrase = var.PASSPHRASE,
       notary_messaging_public_key = var.NOTARY_MESSAGING_PUBLIC_KEY,
-      seed = var.SEED,
+      seed = var.OSOENCRYPTIONPASS,
     } },
   )
   filename = "docker-compose/docker-compose.yml"

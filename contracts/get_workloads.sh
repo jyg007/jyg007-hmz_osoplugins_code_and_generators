@@ -26,7 +26,7 @@ BACKEND=$(cat "$BACKEND_FILE")
 GREP11_FILE="./output/grep11/user-data"
 if [ ! -f $GREP11_FILE ]; then
   echo "backend file does not exist: $GREP11_FILE"
-  exit 1
+#  exit 1
 fi
 GREP11=$(cat "$GREP11_FILE")
 
