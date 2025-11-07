@@ -20,8 +20,8 @@ services:
   kmsconnect:
     image: ${tpl.kmsconnect_image}
     volumes:
-      - "./ibm.cfg:/opt/kms/cfg/ibm.cfg"
-      - "./cert:/data/cert:ro"
+      - "./ibm.cfg:/app/cfg/ibm.cfg:Z"
+      - "./cert:/data/cert:ro,Z"
     restart: always
 
   cold-vault:
