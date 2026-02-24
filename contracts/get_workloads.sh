@@ -23,12 +23,6 @@ if [ ! -f $BACKEND_FILE ]; then
 fi
 BACKEND=$(cat "$BACKEND_FILE")
 
-GREP11_FILE="./output/grep11/user-data"
-if [ ! -f $GREP11_FILE ]; then
-  echo "backend file does not exist: $GREP11_FILE"
-#  exit 1
-fi
-GREP11=$(cat "$GREP11_FILE")
 
 cat <<-EOT
 # Hyper Protect Encrypted Workloads
@@ -51,12 +45,6 @@ BACKEND_WORKLOADS=[
       prev_seed = "",
       volume_path = "/var/lib/libvirt/images/oso/vault-data.qcow2"
     }
-  },
-  {
-    persistent_vol: null,
-    name: "backend-grep11",
-    hipersocket34: true,
-    workload: "$GREP11"
   }
 ]
 EOT

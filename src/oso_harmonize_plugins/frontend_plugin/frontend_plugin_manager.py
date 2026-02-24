@@ -241,62 +241,104 @@ class FrontendPluginManager:
         return documents
 
     def bulk_upload(self, documents):
+        BATCH_SIZE = 20
+
+        def send_batch(content):
+            self.logger.info(
+                "Performing bulk upload to frontend "
+                f"({len(content.get('transactions', []))} transactions)"
+            )
+
+            token = self.get_token()
+            vault_file = None
+
+            try:
+                with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
+                    json.dump(content, f)
+                    vault_file = f.name
+
+                with open(vault_file, "rb") as f:
+                    files = {"files": f}
+                    response = requests.post(
+                        url=f"https://{self.hmz_api_hostname}/v1/vaults/operations/signed",
+                        headers={"Authorization": "Bearer " + token},
+                        files=files,
+                        verify=self.verify,
+                    )
+                    response.raise_for_status()
+
+            finally:
+                if vault_file:
+                    os.remove(vault_file)
+
+        # Batch accumulators
         vaults = []
         transactions = []
         accounts = []
         manifests = []
+        doc_count = 0
 
         self.logger.info("Saving documents for bulk upload")
+
         for document in documents:
             try:
                 document_id = document["id"]
-                self.logger.info(f"Saving document {document_id} for bulk upload")
+                self.logger.info(
+                    f"Saving document {document_id} for bulk upload"
+                )
+
                 contents = json.loads(document["content"])
-                # Decrypt content
+
+                # Decrypt content if needed
                 if self.seed:
                     for section in ("transactions", "accounts", "manifests"):
                         for item in contents.get(section, []):
                             if "signedPayloadCiphered" in item:
-                                item["signedPayload"] = crypt.decrypt(item["signedPayloadCiphered"], self.seed)
+                                item["signedPayload"] = crypt.decrypt(
+                                    item["signedPayloadCiphered"], self.seed
+                                )
                                 del item["signedPayloadCiphered"]
-                       
+
                 transactions.extend(contents.get("transactions", []))
                 accounts.extend(contents.get("accounts", []))
                 manifests.extend(contents.get("manifests", []))
                 vaults.extend(contents.get("vaults", []))
 
+                doc_count += 1
+
+                # Flush every 20 documents
+                if doc_count == BATCH_SIZE:
+                    send_batch({
+                        "accounts": accounts,
+                        "transactions": transactions,
+                        "manifests": manifests,
+                        "vaults": vaults,
+                    })
+
+                    # Reset batch
+                    vaults = []
+                    transactions = []
+                    accounts = []
+                    manifests = []
+                    doc_count = 0
+
                 self.logger.info(
-                    f"Successfully saved document {document_id} for bulk upload"
+                    f"Successfully saved document {document_id}"
                 )
+
             except Exception as e:
                 self.logger.exception(e)
                 continue
 
-        content = {
-            "accounts": accounts,
-            "transactions": transactions,
-            "manifests": manifests,
-            "vaults": vaults,
-        }
+        # Send remaining documents (< 20)
+        if doc_count > 0:
+            send_batch({
+                "accounts": accounts,
+                "transactions": transactions,
+                "manifests": manifests,
+                "vaults": vaults,
+            })
 
-        self.logger.info("Performing bulk upload to frontend")
-        token = self.get_token()
-        try:
-            with tempfile.NamedTemporaryFile(mode="w", delete=False) as vault_file:
-                json.dump(content, vault_file)
-
-            files = {"files": open(vault_file.name, "rb")}
-            response = requests.post(
-                url=f"https://{self.hmz_api_hostname}/v1/vaults/operations/signed",
-                headers={"Authorization": "Bearer " + token},
-                files=files,
-                verify=self.verify,
-            )
-            response.raise_for_status()
-        except Exception as e:
-            raise e
-        finally:
-            os.remove(vault_file.name)
         self.logger.info("Bulk upload finished successfully")
 
     def backend_status(self):
