@@ -12,7 +12,7 @@
 
 REGISTRY ?= us.icr.io
 NAMESPACE ?= dap-osc-dev
-TAG ?= latest
+TAG ?= 2.2.2-rhelubi97
 
 ifdef PIP_UPGRADE
 PIP_COMPILE_UPGRADE := --upgrade
@@ -51,12 +51,12 @@ pip-compile: requirements.constraints.txt requirements.txt requirements.build.tx
 generate: pip-compile
 
 build :
-	docker build \
-		. -t oso-harmonize-plugins:latest -t $(REGISTRY)/$(NAMESPACE)/oso-harmonize-plugins:$(TAG) -f Dockerfile --platform linux/s390x --provenance=false
+	podman build \
+		. -t oso-harmonize-plugins:latest -t oso-harmonize-plugins:$(TAG) -f Dockerfile --platform linux/s390x 
 
 debug : build
-	docker build \
-                . -t oso-harmonize-plugins-dev:latest -t $(REGISTRY)/$(NAMESPACE)/oso-harmonize-plugins-dev:$(TAG) -f Dockerfile.debug --platform linux/s390x --provenance=false
+	podman build \
+                . -t oso-harmonize-plugins-dev:latest -t $(REGISTRY)/$(NAMESPACE)/oso-harmonize-plugins-dev:$(TAG) -f Dockerfile.debug --platform linux/s390x 
 
 ifdef HARMONIZE_PLUGINS_TEST_RESULTS
 VOL_OPTS ::= -v $(HARMONIZE_PLUGINS_TEST_RESULTS):/tests/results:rw,z

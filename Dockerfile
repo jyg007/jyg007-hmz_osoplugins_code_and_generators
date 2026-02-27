@@ -8,7 +8,7 @@
 # deposited with the U.S. Copyright Office
 #
 
-FROM registry.access.redhat.com/ubi9/ubi-minimal:latest AS live
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.7 AS live
 
 ENV HOME=/app-root
 RUN microdnf --assumeyes module enable nginx:1.24 \
@@ -21,6 +21,7 @@ RUN microdnf --assumeyes module enable nginx:1.24 \
             python3.12 \
             gettext nginx findutils \
     && microdnf clean all
+
 
 RUN install --directory --mode 0700 --owner 1001 --group 0 \
         "${HOME}" \
@@ -35,9 +36,13 @@ RUN install --directory --mode 0700 --owner 1001 --group 0 \
     && chmod -R ug+rwX /usr/local/etc \
     ;
 
-FROM registry.access.redhat.com/ubi9/ubi-minimal:latest AS compile
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.7 AS compile
 
-ENV HOME=/app-root
+ENV HOME=/app-root \
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
 RUN microdnf --assumeyes \
         --setopt=install_weak_deps=0 \
         --setopt=keepcache=0 \
@@ -48,7 +53,10 @@ RUN microdnf --assumeyes \
             openssl-devel \
             gcc cargo rustc \
             python3.12-pip python3.12-devel \
-    && mkdir -p "${HOME}"
+  && microdnf clean all \
+    && rm -rf /var/cache/dnf /var/cache/yum
+
+RUN  mkdir -p "${HOME}"
 ARG PIP_INDEX_URL=https://pypi.org/simple \
     PIP_CACHE_DIR=/pipcache
 
@@ -60,6 +68,10 @@ RUN --mount=type=secret,id=netrc,target=${HOME}/.netrc,mode=0600 \
     && pip3.12 install --requirement /tmp/requirements.build.txt \
     && python3.12 -m venv --without-pip /opt/venv \
     && pip3.12 --python /opt/venv install --requirement /tmp/requirements.txt
+RUN pip3.12 --python /opt/venv install --upgrade --no-cache-dir jaraco.context==6.1.0 \
+	urllib3>=2.0.6 \
+        six>=1.17.0 \
+        requests>=2.31.0
 
 COPY /src/oso_harmonize_plugins /src/oso_harmonize_plugins
 COPY /src/setup.py /src
