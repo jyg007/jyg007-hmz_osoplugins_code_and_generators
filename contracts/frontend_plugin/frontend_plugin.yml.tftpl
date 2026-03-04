@@ -5,16 +5,13 @@ services:
     image: ${tpl.image}
     ports:
       - "$${PORT}:$${PORT}"
-      - "$${SSH_PORT}:$${SSH_PORT}"
     environment:
       COMPONENT: "frontend_plugin"
-      SSH_PUBKEY: $${SSH_PUBKEY}
-      SSH_PORT: $${SSH_PORT}
-      PORT: $${PORT}
+      PORT: 4000
       CONFIRMATION_FINGERPRINT: $${CONFIRMATION_FINGERPRINT}
-      COMPONENT_CA_CERT: $${COMPONENT_CA_CERT}
-      FRONTEND_KEY: $${FRONTEND_PLUGIN_KEY}
-      FRONTEND_CERT: $${FRONTEND_PLUGIN_CERT}
+      COMPONENT_CA_CERT: $${certs__ca}
+      FRONTEND_KEY: $${certs__app_key}
+      FRONTEND_CERT: $${certs__app_crt}
       HMZ_USER_SK: "${tpl.HMZ_USER_SK}"
       VAULTID: "${tpl.VAULTID}"
       HMZ_AUTH_HOSTNAME: "${tpl.HMZ_AUTH_HOSTNAME}"

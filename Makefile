@@ -12,7 +12,7 @@
 
 REGISTRY ?= us.icr.io
 NAMESPACE ?= dap-osc-dev
-TAG ?= 2.2.2-rhelubi97
+TAG ?= 2.2.2.2-ubi97
 
 ifdef PIP_UPGRADE
 PIP_COMPILE_UPGRADE := --upgrade

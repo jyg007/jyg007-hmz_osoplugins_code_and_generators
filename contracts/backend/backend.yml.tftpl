@@ -129,16 +129,13 @@ services:
       - cold-vault
     ports:
       - "$${PORT}:$${PORT}"
-      - "$${SSH_PORT}:$${SSH_PORT}"
     environment:
       COMPONENT: "backend_plugin"
       OSOENCRYPTIONPASS: "${tpl.seed}"
-      SSH_PUBKEY: $${SSH_PUBKEY}
       BACKEND_ENDPOINT: http://cold-bridge:8080
-      SSH_PORT: $${SSH_PORT}
-      PORT: $${PORT}
+      PORT: 4000
       BRIDGE_FINGERPRINT: $${BRIDGE_FINGERPRINT}
-      COMPONENT_CA_CERT: $${COMPONENT_CA_CERT}
-      BACKEND_KEY: $${BACKEND_PLUGIN_KEY}
-      BACKEND_CERT: $${BACKEND_PLUGIN_CERT}
+      COMPONENT_CA_CERT: $${certs__ca}
+      BACKEND_KEY: $${certs__app_key}
+      BACKEND_CERT: $${certs__app_crt}
     restart: always

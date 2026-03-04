@@ -10,9 +10,9 @@
 
 [build-system]
 requires = [
-    "cython >= 3",
-    "setuptools",
-    "wheel",
+    "cython>=3.2.4",
+    "setuptools>=82.0.0",
+    "wheel>=0.46.3"
 ]
 build-backend = "setuptools.build_meta"
 
@@ -24,13 +24,16 @@ requires-python = ">= 3.12"
 
 [project.optional-dependencies]
 dependencies = [
-    "cryptography",
-    "flask",
+    "jaraco.context>=6.1.0",
+    "urllib3>=2.0.6",
+    "six>=1.17.0",
+    "requests>=2.31.0",
+    "flask>=3.1.3",
+    "werkzeug==3.1.5",
+    "cryptography>=46.0.5",
     "flask-restx",
     "gunicorn",
-    "requests",
     "supervisor",
-    "urllib3",
 ]
 dev = [
     "docker",
