@@ -101,4 +101,4 @@ class Status(Resource):
             logger.exception(e)
             abort(503)
 
-        return {"stauts": "OK"}, 200
+        return {"status": "OK"}, 200
