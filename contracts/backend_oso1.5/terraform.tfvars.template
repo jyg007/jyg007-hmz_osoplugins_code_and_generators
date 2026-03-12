@@ -1,0 +1,21 @@
+PREFIX=""
+STATIC_IP=true
+
+# Cold Vault Images
+BACKEND_PLUGIN_IMAGE="registry.control23.dap.local/oso/oso-harmonize-plugins@sha256:"
+COLD_BRIDGE_IMAGE="registry.control23.dap.local/metaco-ripple/vault-cold-bridge@sha256:"
+COLD_VAULT_IMAGE="registry.control23.dap.local/metaco-ripple/vault-releases@sha256:"
+KMSCONNECT_IMAGE="registry.control23.dap.local/metaco-ripple/kms-ibm@sha256:"
+
+# Vault Configuration
+VAULT_ID=""
+NOTARY_MESSAGING_PUBLIC_KEY=""
+WORKLOAD_VOL_SEED="vaultseed1"
+
+# Grep11 Configuration
+GREP11_CA=<<-EOT
+EOT
+GREP11_CLIENT_KEY=<<-EOT
+EOT
+GREP11_CLIENT_CERT=<<-EOT
+EOT

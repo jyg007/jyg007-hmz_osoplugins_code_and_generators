@@ -1,0 +1,50 @@
+#
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+logging:
+  # Package log levels
+  # Levels: info, warning, debug, error, fatal, trace, and panic
+  levels:
+    # example below
+    entry: error
+
+###################################
+## GRPC SERVICES TALKING TO GREP11 server ##
+ep11crypto:
+  enabled: true
+  connection:
+    address: 0.0.0.0
+    port: 9876
+
+    # Secure connection TLS options
+    tls:
+      enabled: true
+      # certfile, keyfilie and cacert refer to the pem files that holds the certs
+      certfile: /cfg/grep11server.pem
+      keyfile: /cfg/grep11server-key.pem
+
+      mutual: true
+      cacert: /cfg/grep11ca.pem
+
+      # same as above, but instead of filename, contents of PEM can be in an environment
+      # variable (i.e. to avoid mounting files into docker container)
+      cacertbytes:
+      certfilebytes:
+      keyfilebytes:
+
+    # Server TCP/IP connection monitoring
+    # serverKeepaliveTime is the duration in seconds after which if the server
+    # does not see any activity from the client it pings the client to see
+    # if it is alive
+    # serverKeepaliveTimeout is the duration the server waits for a response
+    # from the client after sending a ping before closing the connection
+    keepalive:
+      serverKeepaliveTime: 30
+      serverKeepaliveTimeout: 5
+
+  # Comma-separated list of card.domain tuples. card and domain are hex numbers
+  # i.e. "01.a9,c.10" correspods to 169th domain on first card and 16th domain on 12th card
+  domain: "HSMDOMAIN"

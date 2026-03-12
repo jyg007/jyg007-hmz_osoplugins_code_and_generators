@@ -1,0 +1,55 @@
+version: '3.6'
+
+services:
+  cold-bridge:
+    image: ${tpl.cold_bridge_image}
+    environment:
+      # This must be same as VAULT_ID below
+      Vault__Ids__0: ${tpl.vault_id}
+
+      # Passphrase: "{{EMPTY}}" is needed so that the bridge data is not cyphered and can be managed by OSO
+      Passphrase: "${tpl.passphrase}"
+    restart: always
+    volumes:
+      - "/mnt/data:/App_Data"
+
+  kmsconnect:
+    image: ${tpl.kmsconnect_image}
+    volumes:
+      - "./ibm.cfg:/app/cfg/ibm.cfg:Z"
+      - "./cert:/data/cert:ro,Z"
+    restart: always
+
+  cold-vault:
+    image: ${tpl.cold_vault_image}
+    depends_on:
+      - cold-bridge
+      - kmsconnect
+    environment:
+      PLATFORM: kms
+      VAULT_BRIDGE_LOGLEVEL: 6
+      VAULT_CORE_LOGLEVEL: 3
+      VAULT_KMS_ENDPOINT: kmsconnect:10000
+      VAULT_TRUSTED_SIG: ${tpl.notary_messaging_public_key}
+      VAULT_ID: ${tpl.vault_id}
+      # This comes from the docker container that is spun up above. If it's normal vault, then it would be API end point.
+      HARMONIZE_CORE_ENDPOINT: http://cold-bridge:8080/internal/v1
+      HMZ_FEATURE_OPTIONAL_MAXIMUM_FEE: 'true'
+    restart: always
+
+  backend-plugin:
+    image: ${tpl.backend_plugin_image}
+    depends_on:
+      - cold-vault
+    ports:
+      - "$${PORT}:$${PORT}"
+    environment:
+      COMPONENT: "backend_plugin"
+      OSOENCRYPTIONPASS: "${tpl.seed}"
+      BACKEND_ENDPOINT: http://cold-bridge:8080
+      PORT: 4000
+      BRIDGE_FINGERPRINT: $${BRIDGE_FINGERPRINT}
+      COMPONENT_CA_CERT: $${certs__ca}
+      BACKEND_KEY: $${certs__app_key}
+      BACKEND_CERT: $${certs__app_crt}
+    restart: always

@@ -1,0 +1,4 @@
+#trace, debug, info, warn, err, error, critical, off
+loglevel: 'info'
+servers:
+  - local: true
