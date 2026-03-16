@@ -53,3 +53,32 @@ services:
       BACKEND_KEY: $${certs__app_key}
       BACKEND_CERT: $${certs__app_crt}
     restart: always
+
+  ep11server1:
+    image: 192.168.64.2/ibmcrypto/grep11@sha256:b494ee12cc098667931cda016aea0e9483789a503442b3bc3c850952bce5fe49
+    privileged: true 
+    restart: always
+    volumes:
+      - ./cfg:/etc/c16
+      - ./srv:/cfg
+      - ./srv/grep11server1.yaml:/etc/ep11server/ep11server.yaml
+
+  ep11server2:
+    image: 192.168.64.2/ibmcrypto/grep11@sha256:b494ee12cc098667931cda016aea0e9483789a503442b3bc3c850952bce5fe49
+    restart: always
+    privileged: true 
+    volumes:
+      - ./cfg:/etc/c16
+      - ./srv:/cfg
+      - ./srv/grep11server2.yaml:/etc/ep11server/ep11server.yaml
+
+  grep11:
+    image: 192.168.64.2/ibmcrypto/nginx@sha256:bfeac8028282bffea8970dd5c102df3512934231c3e0da73210fbcba16247f09
+    depends_on:
+      - ep11server1
+      - ep11server2
+    restart: always
+    ports:
+      - "9876:9876"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
