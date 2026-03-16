@@ -40,13 +40,15 @@ resource "local_file" "docker_compose" {
       cold_bridge_image = var.COLD_BRIDGE_IMAGE,
       cold_vault_image = var.COLD_VAULT_IMAGE,
       kmsconnect_image = var.KMSCONNECT_IMAGE,
+      grep11_image = var.GREP11_IMAGE,
+      nginx_image = var.NGINX_IMAGE,
       vault_id = var.VAULT_ID,
       passphrase = var.PASSPHRASE,
       notary_messaging_public_key = var.NOTARY_MESSAGING_PUBLIC_KEY,
       seed = var.OSOENCRYPTIONPASS,
     } },
   )
-  filename = "docker-compose/docker-compose.yml"
+  filename = "docker-compose/play.yml"
   file_permission = "0664"
 
   depends_on = [
@@ -72,7 +74,7 @@ locals {
     endpoint = ${local.grep11_endpoint}
   EOT
   compose = {
-    "compose" : {
+    "play" : {
       "archive" : hpcr_tgz.workload.rendered
     }
   }

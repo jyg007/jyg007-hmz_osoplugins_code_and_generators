@@ -9,7 +9,7 @@ req_extensions = grep11server
 
 [ grep11server ]
 #subjectAltName = DNS.1:grep11.svc.net:9876,DNS.2:192.168.96.21:9876,DNS.3:192.168.96.21,IP:192.168.96.21,DNS.4:grep11.svc.net,DNS.5:grep11,DNS.6:grep11:9876
-subjectAltName =  DNS.1:grep11,DNS.2:grep11:9876
+subjectAltName =  DNS.1:localhost,DNS.2:localhost:9876
 extendedKeyUsage = serverAuth
 
 [ dn ]

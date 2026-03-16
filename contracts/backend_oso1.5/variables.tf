@@ -45,6 +45,16 @@ variable "KMSCONNECT_IMAGE" {
   description = "KMS connect image containing registry"
 }
 
+variable "GREP11_IMAGE" {
+  type = string
+  description = "IBM Grep11 image containing registry"
+}
+
+variable "NGINX_IMAGE" {
+  type = string
+  description = "nginx image containing registry"
+}
+
 variable "VAULT_ID" {
   type = string
   description = "Vault ID"
@@ -72,7 +82,7 @@ variable "GREP11_HOST" {
   type = string
   description = "GREP11 backend endpoint"
   #  default = "192.168.96.21"
-  default = "grep11"
+  default = "localhost"
 }
 
 variable "GREP11_PORT" {

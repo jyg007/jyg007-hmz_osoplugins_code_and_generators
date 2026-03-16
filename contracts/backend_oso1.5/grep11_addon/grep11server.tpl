@@ -17,7 +17,7 @@ ep11crypto:
   enabled: true
   connection:
     address: 0.0.0.0
-    port: 9876
+    port: EP11SERVERPORT
 
     # Secure connection TLS options
     tls:
