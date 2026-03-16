@@ -20,7 +20,7 @@ pushd "$contract_root" || exit 1
 pushd backend_oso1.5 || exit 1
 # shellcheck disable=SC2154
 ./includegrep11.sh
-mv env-crypto.yml ..
+#mv env-crypto.yml ..
 
 ${tf} init && ${tf} destroy -auto-approve && ${tf} apply -auto-approve
 ${CP} -rf backend.yml ../output/backend/user-data
