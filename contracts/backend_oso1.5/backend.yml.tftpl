@@ -116,6 +116,18 @@ spec:
               name: contract.config.map
               key: certs__app_key
               optional: false
+        - name: mode
+          valueFrom:
+            configMapKeyRef:
+              name: contract.config.map
+              key: mode
+              optional: false
+        - name: BRIDGE_FINGERPRINT
+          valueFrom:
+            configMapKeyRef:
+              name: contract.config.map
+              key: BRIDGE_FINGERPRINT
+              optional: false
 
     - name: ep11server1
       image: ${tpl.grep11_image}
