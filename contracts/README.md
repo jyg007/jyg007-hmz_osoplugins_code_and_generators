@@ -9,21 +9,13 @@ This function provides the integration of IBM Hyper Protect Offline Signing Orch
 - The supporting infrastructure containing syslog/registry/etc across LPAR1-LPAR3.
 
 ### Copy the Offline Signing Orchestrator Plugin to a private registry
-1. Verify the image signature by running the command:
-    ```
-    wget https://public.dhe.ibm.com/systems/hyper-protect/OSO_GPG_Key.pub
-    gpg --import OSO_GPG_Key.pub
-    export FINGERPRINT=$(gpg --fingerprint --with-colons | grep fpr | tr -d 'fpr:')
-
-    skopeo standalone-verify images/oso-harmonize-plugins/manifest.json us.icr.io/dap-osc-staging/oso-harmonize-plugins:v1.0.2 $FINGERPRINT images/oso-harmonize-plugins/signature-1
-    ```
 1. Load the docker images.
 
-    `skopeo copy dir:./images/oso-harmonize-plugins docker://registry.control23.dap.local/oso/oso-harmonize-plugins:v1.0.2 --dest-creds $REGISTRY_USER:$REGISTRY_PASSWORD --remove-signatures`
+    `skopeo copy dir:./images/oso-harmonize-plugins docker://192.168.0.2/oso/oso-harmonize-plugins:2.2.3-ubi97 --dest-creds $REGISTRY_USER:$REGISTRY_PASSWORD --remove-signatures`
 
 1. Retrieve and note the digest of the loaded docker image.  The digest will be needed when setting the FRONTEND_PLUGIN_IMAGE and BACKEND_PLUGIN_IMAGE variables within the terraform.tfvars files as described in later sections of this document.
 
-    `skopeo inspect docker://registry.control23.dap.local/oso/oso-harmonize-plugins:v1.0.2 --creds $REGISTRY_USER:$REGISTRY_PASSWORD | jq '.Name + "@" + .Digest'`
+    `skopeo inspect docker://192.168.0.2/oso/oso-harmonize-plugins:2.2.3-ubi97 --creds $REGISTRY_USER:$REGISTRY_PASSWORD | jq '.Name + "@" + .Digest'`
 
 ## Frontend Plugin
 The Offline Signing Orchestrator frontend plugin performs import or export operations to or from the Ripple Custody core which is accessible from LPAR1 (hot).
@@ -69,10 +61,16 @@ OSO uses the encrypted workload to deploy the frontend (LPAR1) components during
     - `HMZ_AUTH_HOSTNAME` - Ripple Custody frontend auth hostname
     - `HMZ_API_HOSTNAME` - Ripple Custody frontend api hostname
     - `VAULT_ID` - Vault ID used for cold vault operations. If you are using a new vault, then generate a new uuid.
-    - `SK` - Base64 private key for OSO functional user account
+    - `HMZ_USER_SK` - Base64 private key for OSO functional user account
     - `FRONTEND_PLUGIN_IMAGE` - Frontend plugin image with sha256
-    - `SEED` - Passphrase used to optionally encrypt the data being transferred between OSO and Ripple Custody. The passphrase must match with the backend.
+    - `OSOENCRYPTIONPASS` - Passphrase used to optionally encrypt the data being transferred between OSO and Ripple Custody. The passphrase must match with the backend.
     - `TOKEN_EXP` - Expiration time configured in Ripple Custody for the bearer token returned upon authentication
+    - `GREP11_CA` Grep11 CA certificate
+    - `GREP11_CLIENT` grep11 client certificate
+    - `GREP11_KEY` grep11 client key
+    - `HPCR_CERT` IBM HPVS encryption certificates
+    - `ROOT_CERT` Harmonize root cert in base64
+
 1. To generate the encrypted workload, change to the `contracts` directory and run:
 
     `./create-frontend.sh`
@@ -82,33 +80,6 @@ OSO uses the encrypted workload to deploy the frontend (LPAR1) components during
 ### Prerequisites
 - The supporting infrastructure containing syslog/registry/etc across LPAR1-LPAR3 with hipersocket networks defined.
 - Download OpenTofu and the required terraform providers (hpcr, local, and tls) from the Offline Signing Orchestrator release archive.
-- A configured Crypto appliance accessible from HiperSocket34 network on LPAR3.
-
-### Copy grep11-c16 image to registry
-Download the grep11-c16 image, copy it to the private registry, and obtain the sha256 of the image.  See the [IBM Hyper Protect Virtual Servers Documentation](https://www.ibm.com/docs/en/hpvs/2.1.x?topic=dcenasee-downloading-crypto-express-network-api-secure-execution-enclaves-major-release) for steps to locate and download the image.
-
-
-### Generate encrypted workload
-The encrypted workload will be used within OSO when deploying along with the backend services during a signing iteration process on LPAR3. Change to the `grep11` directory and perform the following steps:
-1. Copy the terraform template.
-
-    `cp terraform.tfvars.template terraform.tfvars`
-1. Edit the `terraform.tfvars` file and assign values to the following terraform variables:
-    - `PREFIX` - Prefix used for OSO deployment
-    - `STATIC_IP` - true for releases OSO 1.4 and higher where static IP addresses are used, otherwise set to false
-    - `IMAGE` - GREP11-C16 image with sha256 (see above)
-    - `DOMAIN` - Crypto appliance domain
-    - `C16_CA_CERT` - Crypto appliance CA certificate (certs/ca.pem)
-    - `C16_CLIENT_CERT` - Crypto appliance client certificate (certs/c16client.pem)
-    - `C16_CLIENT_KEY` - Crypto appliance client key (certs/c16client-key.pem)
-    - `C16_CLIENT_HOST` - Crypto appliance host IP address - only set if default value (192.168.128.4) is not correct
-        - Note: for releases prior to OSO 1.4 that do not support static IP addresses, the crypto appliance IP address
-          will be on a different subnet (eg 192.168.7.4)
-1. To generate the encrypted workload, change to the `contracts` directory and run:
-
-    `./create-grep11.sh`
-
-1. The GREP11 server and client keys/certificates are generated within the `grep11/certs` directory.  Use the GREP11 CA certificate, client certificate, and client key when setting the terraform variables for the Backend deployment as described in the next section.  Every time the `create-grep11.sh` runs, new certificates are generated.
 
 ## Backend
 
@@ -130,7 +101,7 @@ The encrypted workload will be used within OSO when deploying along with the GRE
     - `PREFIX` - Prefix used for OSO deployment
     - `STATIC_IP` - true for releases OSO 1.4 and higher where static IP addresses are used, otherwise set to false
     - `BACKEND_PLUGIN_IMAGE` - Backend plugin image with sha256 (see above)
-    - `SEED` - Passphrase used to optionally encrypt the data being transferred between OSO and Ripple Custody (matches frontend)
+    - `OSOENCRYPTIONPASS` - Passphrase used to optionally encrypt the data being transferred between OSO and Ripple Custody (matches frontend)
     - `COLD_BRIDGE_IMAGE` - Cold bridge image with sha256 (see above)
     - `COLD_VAULT_IMAGE` - Cold vault image with sha256 (see above)
     - `KMSCONNECT_IMAGE` - KMS connect image with sha256 (see above)
