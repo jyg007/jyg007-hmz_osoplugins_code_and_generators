@@ -1,30 +1,16 @@
 # Digital Asset Platform Cold Storage Metaco Harmonize Plugins
 
-This repo maintains the document and code to define Metaco Harmonize plugins for the IBM Offline Signing Orchestrator.
+This repo maintains the document and code to define Metaco Harmonize plugins for the IBM Offline Signing Orchestrator 1.3.2, 1.4+ and 1.5
+It supports multivault capability while the backend.tfpl requires updates.
 
 ## Building
-### Build environment variables
-| Environment Variable  | Description                                                                 |
-| --------------------- | --------------------------------------------------------------------------- |
-| REGISTRY_URL          | URL of your container registry (e.g., us.icr.io). |
-| REGISTRY_NAMESPACE    | Container registry namespace |
 
-### Frontend Sidecar
 ```
-export REGISTRY_URL=us.icr.io
-export REGISTRY_NAMESPACE=<REGISTRY_NAMESPACE>
-make frontend_sidecar
+make generate
+make build
 ```
 
-### Backend Sidecar
-```
-export REGISTRY_URL=us.icr.io
-export REGISTRY_NAMESPACE=<REGISTRY_NAMESPACE>
-make backend_sidecar
-```
+### Contract Generators
 
-### Sidecar Contracts
-1. Change the working directory to `contracts`
-1. For both backend_sidecar and frontend_sidecar directories, copy the `terraform.tfvars.template` file to `terraform.tfvars` and fill out the required variables
-1. Generate the contracts: `./create_contracts.sh` under the `contracts` directory
-1. Use the generated encrypted workload as part of the Offline Signing Orchestrator conductor plugin workloads
+frontend-plugin and backend-plugin contract generators can be found in contract directory.
+grep11 server certificates (and client) must be generated before (use `gen.sh` script).
