@@ -8,9 +8,30 @@
 # deposited with the U.S. Copyright Office
 #
 
-resource "local_file" "ibm_cfg" {
-  content = local.ibm_cfg
-  filename = "docker-compose/ibm.cfg"
+resource "local_file" "ibm4_cfg" {
+  content = local.ibm4_cfg
+  filename = "docker-compose/ibm4.cfg"
+  file_permission = "0664"
+}
+
+resource "local_file" "ibm3_cfg" {
+  content = local.ibm3_cfg
+  filename = "docker-compose/ibm3.cfg"
+  file_permission = "0664"
+}
+resource "local_file" "ibm2_cfg" {
+  content = local.ibm2_cfg
+  filename = "docker-compose/ibm2.cfg"
+  file_permission = "0664"
+}
+resource "local_file" "ibm1_cfg" {
+  content = local.ibm1_cfg
+  filename = "docker-compose/ibm1.cfg"
+  file_permission = "0664"
+}
+resource "local_file" "ibm0_cfg" {
+  content = local.ibm0_cfg
+  filename = "docker-compose/ibm0.cfg"
   file_permission = "0664"
 }
 
@@ -50,7 +71,7 @@ resource "local_file" "docker_compose" {
   file_permission = "0664"
 
   depends_on = [
-    local_file.ibm_cfg,
+    local_file.ibm0_cfg,
     local_file.grep_ca,
     local_file.grep_client_key,
     local_file.grep_client_cert
@@ -66,10 +87,31 @@ resource "hpcr_tgz" "workload" {
 }
 
 locals {
-  grep11_endpoint = var.STATIC_IP ? format("%s:%s", var.GREP11_HOST, var.GREP11_PORT): format("%s-cs-backend-grep11.control23.dap.local:%s", var.PREFIX, var.GREP11_PORT)
-  ibm_cfg = <<-EOT
+  grep11_endpoint0 = format("%s:%s", var.GREP11_HOST, 9876) 
+  grep11_endpoint1 = format("%s:%s", var.GREP11_HOST, 9877) 
+  grep11_endpoint2 = format("%s:%s", var.GREP11_HOST, 9878) 
+  grep11_endpoint3 = format("%s:%s", var.GREP11_HOST, 9879) 
+  grep11_endpoint4 = format("%s:%s", var.GREP11_HOST, 9880) 
+  
+  ibm0_cfg = <<-EOT
     system = onprem
-    endpoint = ${local.grep11_endpoint}
+    endpoint = ${local.grep11_endpoint0}
+  EOT
+  ibm1_cfg = <<-EOT
+    system = onprem
+    endpoint = ${local.grep11_endpoint1}
+  EOT
+  ibm2_cfg = <<-EOT
+    system = onprem
+    endpoint = ${local.grep11_endpoint2}
+  EOT
+  ibm3_cfg = <<-EOT
+    system = onprem
+    endpoint = ${local.grep11_endpoint3}
+  EOT
+  ibm4_cfg = <<-EOT
+    system = onprem
+    endpoint = ${local.grep11_endpoint4}
   EOT
   compose = {
     "compose" : {
