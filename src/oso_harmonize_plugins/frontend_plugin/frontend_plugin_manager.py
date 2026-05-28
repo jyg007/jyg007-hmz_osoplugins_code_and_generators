@@ -79,6 +79,7 @@ class FrontendPluginManager:
 
         logging.basicConfig(stream=sys.stdout, level=logging.INFO)
         self.logger = logging.getLogger(__name__)
+        self.session = requests.Session()
 
     def _sign(self, challenge: str = str(uuid.uuid4())) -> bytes:
         """
@@ -127,8 +128,10 @@ class FrontendPluginManager:
     @lru_cache()  # Cache result - token + timestamp
     def _get_token(self) -> Tuple[str, float]:
         self.logger.info("Generating new JWT access token...")
+
         challenge = str(uuid.uuid4())
         signature = self._sign(challenge)
+
         data = {
             "client_id": self.hmz_auth_customerid,
             "grant_type": "password",
@@ -137,20 +140,70 @@ class FrontendPluginManager:
             "signature": base64.b64encode(signature).decode("utf-8"),
         }
 
-        response = requests.post(
-            f"https://{self.hmz_auth_hostname}{self.hmz_auth_path}",
-            data=data,
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
-            verify=self.verify,
-        )
+        url = f"https://{self.hmz_auth_hostname}{self.hmz_auth_path}"
 
-        response.raise_for_status()
-        response_json = response.json()
+        try:
+            response = self.session.post(
+                url,
+                data=data,
+                headers={
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                verify=self.verify,
+                timeout=(5, 30),  # connect timeout, read timeout
+            )
+
+        except requests.exceptions.Timeout as e:
+            self.logger.error("Timeout while requesting token: %s", e)
+            raise errors.NetworkError("Token request timeout") from e
+
+        except requests.exceptions.ConnectionError as e:
+            self.logger.error("Connection error while requesting token: %s", e)
+            raise errors.NetworkError("Token connection error") from e
+
+        except requests.exceptions.RequestException as e:
+            self.logger.error("Unexpected network error: %s", e)
+            raise errors.NetworkError("Unexpected token request error") from e
+
+        if response.status_code in (401, 403):
+            self.logger.error(
+                "Authentication failed with status %s: %s",
+                response.status_code,
+                response.text,
+            )
+            raise errors.AuthenticationError("Authentication failed")
+
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            self.logger.error(
+                "HTTP error while requesting token: %s - %s",
+                response.status_code,
+                response.text,
+            )
+            raise errors.TokenError(
+                f"Token endpoint returned HTTP {response.status_code}"
+            ) from e
+
+        try:
+            response_json = response.json()
+        except ValueError as e:
+            self.logger.error(
+                "Invalid JSON returned from token endpoint: %s",
+                response.text,
+            )
+            raise errors.TokenError("Invalid JSON response from token endpoint") from e
+
         token = response_json.get("access_token")
         if not token:
-            raise Exception("Could not get token from response json")
+            self.logger.error(
+                "No access_token in response: %s",
+                response_json,
+            )
+            raise errors.TokenError("Could not get token from response")
 
         self.logger.info("Successfully generated new JWT access token")
+
         return token, time.time()
 
     def _write_root_cert(self, root_cert_file: IO[bytes]) -> Union[str, bool]:

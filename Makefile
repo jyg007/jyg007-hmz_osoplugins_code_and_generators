@@ -6,7 +6,7 @@
 
 .PHONY : build 
 
-TAG ?= 2.2.3-ubi97-test
+TAG ?= 2.2.4-ubi98
 
 ifdef PIP_UPGRADE
 PIP_COMPILE_UPGRADE := --upgrade

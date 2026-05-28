@@ -8,10 +8,10 @@
 # deposited with the U.S. Copyright Office
 #
 
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.7 AS live
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.8 AS live
 
 ENV HOME=/app-root
-RUN microdnf --assumeyes module enable nginx:1.24 \
+RUN microdnf --assumeyes module enable nginx:1.26 \
     && microdnf --assumeyes \
         --setopt=install_weak_deps=0 \
         --disablerepo='*' \
@@ -36,7 +36,7 @@ RUN install --directory --mode 0700 --owner 1001 --group 0 \
     && chmod -R ug+rwX /usr/local/etc \
     ;
 
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.7 AS compile
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.8 AS compile
 
 ENV HOME=/app-root \
     PIP_NO_CACHE_DIR=1 \
@@ -83,6 +83,8 @@ FROM live AS release
 COPY --from=compile --chown=1001:0 /opt/venv /opt/venv
 COPY --from=compile --chown=1001:0 ${HOME} ${HOME}
 COPY --chown=1001:0 /src/app-root /oso-root
+
+RUN rm -rf /app-root/.cargo
 
 USER 1001
 ENV PATH="/opt/venv/bin:$PATH"
