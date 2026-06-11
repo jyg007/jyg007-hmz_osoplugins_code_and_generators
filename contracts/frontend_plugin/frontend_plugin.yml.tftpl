@@ -3,6 +3,7 @@ version: '2.4'
 services:
   frontend_plugin:
     image: ${tpl.image}
+    restart: always
     ports:
       - "$${PORT}:$${PORT}"
     environment:
