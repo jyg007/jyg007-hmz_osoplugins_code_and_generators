@@ -18,26 +18,6 @@ spec:
       hostPath:
         path: ./cert
         type: Directory
-    - name: cfg
-      hostPath:
-        path: ./cfg
-        type: Directory
-    - name: srv
-      hostPath:
-        path: ./srv
-        type: Directory
-    - name: grep11server1-config
-      hostPath:
-        path: ./srv/grep11server1.yaml
-        type: File
-    - name: grep11server2-config
-      hostPath:
-        path: ./srv/grep11server2.yaml
-        type: File
-    - name: nginx-config
-      hostPath:
-        path: ./nginx/nginx.conf
-        type: File
 
   containers:
     - name: cold-bridge
@@ -128,37 +108,4 @@ spec:
               name: contract.config.map
               key: BRIDGE_FINGERPRINT
               optional: false
-
-    - name: ep11server1
-      image: ${tpl.grep11_image}
-      securityContext:
-        privileged: true
-      volumeMounts:
-        - name: cfg
-          mountPath: /etc/c16
-        - name: srv
-          mountPath: /cfg
-        - name: grep11server1-config
-          mountPath: /etc/ep11server/ep11server.yaml
-
-    - name: ep11server2
-      image: ${tpl.grep11_image}
-      securityContext:
-        privileged: true
-      volumeMounts:
-        - name: cfg
-          mountPath: /etc/c16
-        - name: srv
-          mountPath: /cfg
-        - name: grep11server2-config
-          mountPath: /etc/ep11server/ep11server.yaml
-
-    - name: grep11
-      image: ${tpl.nginx_image}
-      ports:
-        - containerPort: 9876
-          hostPort: 9876
-      volumeMounts:
-        - name: nginx-config
-          mountPath: /etc/nginx/nginx.conf
 

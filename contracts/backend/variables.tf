@@ -95,11 +95,6 @@ variable "GREP11_CLIENT_CERT" {
   description = "GREP11 client certificate"
 }
 
-variable "WORKLOAD_VOL_SEED" {
-  type = string
-  description = "Workload volume encryption seed"
-}
-
 variable "PORT" {
   type        = string
   description = "External port number for api"

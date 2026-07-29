@@ -12,12 +12,5 @@ locals {
   workload_template = {
     "type" : "workload",
     "images": {},
-    "volumes": {
-        "vault_vol": {
-            "filesystem": "ext4",
-            "mount": "/mnt/data",
-            "seed": var.WORKLOAD_VOL_SEED,
-        }
-    }
   }
 }
