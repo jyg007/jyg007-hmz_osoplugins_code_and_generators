@@ -15,6 +15,8 @@ import os
 import sys
 import tempfile
 from typing import Dict, List
+import io
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
 import urllib3
@@ -31,7 +33,7 @@ class BackendPluginManager:
             raise errors.ConfigError("BACKEND_ENDPOINT not found")
         self.backend_endpoint = os.environ["BACKEND_ENDPOINT"]
         self.seed = os.environ.get("OSOENCRYPTIONPASS", "")
-
+        self.whitelisting = os.environ.get("WHITELISTING", "0")
         logging.basicConfig(stream=sys.stdout, level=logging.INFO)
         self.logger = logging.getLogger(__name__)
 
@@ -43,7 +45,7 @@ class BackendPluginManager:
         response.raise_for_status()
 
     def bulk_download(self) -> List[Dict]:
-        response = requests.get(f"{self.backend_endpoint}/v1/feed/download?clean=True")
+        response = requests.get(f"{self.backend_endpoint}/v1/feed/download?clean=true")
         response.raise_for_status()
         response_json = response.json()
         self.logger.info("Bulk download finished successfully")
@@ -79,6 +81,85 @@ class BackendPluginManager:
                 })
 
         return documents
+
+    def load_whitelist(self,vaultid):
+        whitelist = set()
+        whitelist_file = f"/whitelists/whitelist.{vaultid}"
+    
+        if os.path.isfile(whitelist_file):
+            with open(whitelist_file, "r") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#"):
+                        whitelist.add(line.lower())
+    
+        self.logger.info(
+            "Loaded whitelist for vaultid=%s size=%d",
+            vaultid,
+            len(whitelist),
+        )
+
+        return whitelist
+
+    def decode_payload(self,input_obj,vaultid,whitelist):
+        txid = input_obj["transactionId"]
+    
+        payload = {
+                    "vaultId": vaultid,
+                    "accounts": [],
+                    "transactions": [ input_obj ],
+                    "manifests": [],
+        }      
+
+        try:
+            r = requests.post(
+                f"{self.backend_endpoint}/v1/feed/decode",
+                files={
+                    "files": (
+                        "input.json",
+                        io.BytesIO(json.dumps(payload).encode("utf-8"))
+                    )
+                },
+                timeout=10
+            )
+    
+            if r.status_code != 200:
+                self.logger.error(f"[{txid}] API returned HTTP {r.status_code}")
+                return None
+    
+            data = r.json()
+    
+            dest_addr = data[0][0]["data"]["Tx"]["expenses"][0]["dest"]["data"]["Addr"].lower()
+    
+            if whitelist and dest_addr not in whitelist:
+                self.logger.warning(f"Filtered out txid={txid}, dest={dest_addr}")
+                return None
+            return input_obj
+    
+        except Exception as e:
+            self.logger.exception(f"[{txid}] Failed: {e}")
+            return None
+
+    def whitelist_tx(self,input_objects, vaultid,whitelist, max_workers=2):
+        results = []
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {
+                executor.submit(self.decode_payload, obj,vaultid,whitelist): obj
+                for obj in input_objects
+            }
+    
+            for fut in as_completed(futures):
+                obj = futures[fut]
+                txid = obj["transactionId"]
+    
+                try:
+                    res = fut.result()
+                    if res is not None:
+                        results.append(res)
+                except Exception as e:
+                    self.logger.exception(f"[{txid}] worker crash: {e}")
+
+        return results
 
     def bulk_upload(self, documents):
         v_tx= {}
@@ -117,12 +198,31 @@ class BackendPluginManager:
 
         self.logger.info("Performing bulk upload to backend")
         for vaultid in v_tx.keys():  
-            content = {
-                "vaultId": vaultid,
-                "accounts": v_ac[vaultid],
-                "transactions": v_tx[vaultid],
-                "manifests": v_ma[vaultid],
-            }
+            if self.whitelisting == "1":
+                list = self.load_whitelist(vaultid)
+                if len(list) != 0:
+                    filtered= self.whitelist_tx(v_tx[vaultid], vaultid,list) 
+                    content = {
+                      "vaultId": vaultid,
+                      "accounts": v_ac[vaultid],
+                      "transactions": filtered,
+                      "manifests": v_ma[vaultid],
+                    }
+                else: 
+                    self.logger.info(f"No whitelist file found for vaultid {vaultid}")
+                    content = {
+                      "vaultId": vaultid,
+                      "accounts": v_ac[vaultid],
+                      "transactions": [] ,
+                      "manifests": v_ma[vaultid],
+                    }
+            else:
+                content = {
+                  "vaultId": vaultid,
+                  "accounts": v_ac[vaultid],
+                  "transactions": v_tx[vaultid],
+                  "manifests": v_ma[vaultid],
+                }
 
             try:
                 with tempfile.NamedTemporaryFile(mode="w", delete=False) as vault_file:

@@ -38,6 +38,7 @@ http {
 
     # Define the timeout value for keep-alive connections with the client
     # keepalive_timeout  65;
+  ignore_invalid_headers on;
 
   server {
     error_log /var/log/nginx/error.log debug;

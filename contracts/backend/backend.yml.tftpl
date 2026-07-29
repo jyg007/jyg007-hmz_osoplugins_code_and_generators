@@ -139,3 +139,5 @@ services:
       BACKEND_KEY: $${certs__app_key}
       BACKEND_CERT: $${certs__app_crt}
     restart: always
+    volumes:
+      - ./whitelists:/whitelists
