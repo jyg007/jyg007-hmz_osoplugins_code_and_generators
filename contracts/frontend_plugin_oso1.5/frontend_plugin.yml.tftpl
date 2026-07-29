@@ -3,6 +3,7 @@ kind: Pod
 metadata:
   name: frontend-pod
 spec:
+  restartPolicy: Always
   containers:
     - name: frontend-plugin
       image: ${tpl.image}
@@ -14,6 +15,8 @@ spec:
            name: contract.config.map
            optional: false
       env:
+        - name: PORT 
+          value: "4000"
         - name: COMPONENT
           value: "frontend_plugin"
         - name: HMZ_USER_SK

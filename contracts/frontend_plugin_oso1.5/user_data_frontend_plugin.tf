@@ -24,7 +24,7 @@ resource "local_file" "frontend_plugin_docker_compose" {
       TOKEN_EXP = var.TOKEN_EXP
     } },
   )
-  filename = "frontend_plugin/docker-compose.yml"
+  filename = "frontend_plugin/play.yml"
   file_permission = "0664"
 }
 
