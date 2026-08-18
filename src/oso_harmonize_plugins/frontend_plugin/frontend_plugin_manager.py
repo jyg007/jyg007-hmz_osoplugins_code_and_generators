@@ -31,11 +31,42 @@ from oso_harmonize_plugins.common import crypt, errors, utils
 
 class FrontendPluginManager:
     def __init__(self):
-        if "HMZ_USER_SK" not in os.environ:
+        logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+        self.logger = logging.getLogger(__name__)
+        
+        # HMZ_USER_SK
+        private_key_b64 = os.environ.get("HMZ_USER_SK")
+        
+        if not private_key_b64:
             raise errors.ConfigError("Harmonize OSO user server key not found")
-        private_key_b64 = os.environ["HMZ_USER_SK"]
-        private_key_decoded = base64.b64decode(private_key_b64)
-        self.private_key = load_pem_private_key(private_key_decoded, password=None)
+        
+        try:
+            private_key_decoded = base64.b64decode(
+                private_key_b64,
+                validate=True,
+            )
+        except Exception as exc:
+            self.logger.error(
+                "Failed to decode HMZ_USER_SK: %s",
+                exc,
+            )
+            raise errors.ConfigError(
+                "Harmonize OSO user server key is not valid Base64"
+            ) from exc
+        try:
+            self.private_key = load_pem_private_key(
+                private_key_decoded,
+                password=None,
+            )
+        except (ValueError, TypeError) as exc:
+            self.logger.error(
+                "HMZ_USER_SK does not contain a valid PEM private key: %s",
+                exc,
+            )
+            raise errors.ConfigError(
+                "Harmonize OSO user server key is not a valid PEM private key"
+            ) from exc
+        
         self.public_key = base64.b64encode(
             self.private_key.public_key().public_bytes(
                 encoding=serialization.Encoding.DER,
@@ -59,9 +90,10 @@ class FrontendPluginManager:
             raise errors.ConfigError("HMZ_API_HOSTNAME not found")
         self.hmz_api_hostname = os.environ["HMZ_API_HOSTNAME"]
 
-        if "VAULTID" not in os.environ:
-            raise errors.ConfigError("VAULTID not found")
-        self.vaultids = os.environ["VAULTID"].split()
+        vaultids = os.environ.get("VAULTIDS") or os.environ.get("VAULTID")
+        if not vaultids:
+            raise errors.ConfigError("VAULTID or VAULTIDS not found")
+        self.vaultids = vaultids.replace(",", " ").split()
 
         self.seed = os.environ.get("OSOENCRYPTIONPASS", "")
 
@@ -207,13 +239,37 @@ class FrontendPluginManager:
         return token, time.time()
 
     def _write_root_cert(self, root_cert_file: IO[bytes]) -> Union[str, bool]:
-        if self.root_cert_b64:
-            rootcert = base64.b64decode(self.root_cert_b64)
+        if not self.root_cert_b64:
+            self.logger.info("ROOTCERT not configured")
+            return True
+    
+        try:
+            rootcert = base64.b64decode(
+                self.root_cert_b64,
+                validate=True,
+            )
+        except Exception as exc:
+            self.logger.error(
+                "Failed to decode ROOTCERT: %s",
+                exc,
+            )
+            raise errors.ConfigError(
+                "ROOTCERT is not valid Base64"
+            ) from exc
+        
+        try:
             root_cert_file.write(rootcert)
             root_cert_file.seek(0)
-            return root_cert_file.name
-        else:
-            return True
+        except OSError as exc:
+            self.logger.error(
+                "Failed to write ROOTCERT to temporary file: %s",
+                exc,
+            )
+            raise errors.ConfigError(
+                "Failed to write ROOTCERT"
+            ) from exc
+    
+        return root_cert_file.name
 
     def get_token(self) -> str:
         self.logger.info("Obtaining JWT access token...")

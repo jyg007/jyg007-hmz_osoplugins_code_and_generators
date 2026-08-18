@@ -37,48 +37,75 @@ class BackendPluginManager:
         logging.basicConfig(stream=sys.stdout, level=logging.INFO)
         self.logger = logging.getLogger(__name__)
 
+        vaultids = os.environ.get("VAULTIDS") or os.environ.get("VAULTID")
+
+        if not vaultids:
+            raise errors.ConfigError("VAULTID or VAULTIDS not found")
+
+        self.VAULTIDS = {v.strip() for v in vaultids.replace(",", " ").split() if v.strip()}
+
     def backend_status(self):
-        response = requests.get(
-            f"{self.backend_endpoint}/v1/feed/status",
-            timeout=3,
-        )
-        response.raise_for_status()
+        statuses = {}
+
+        for vaultid in self.VAULTIDS:
+            try:
+                response = requests.get(
+                    f"{self.backend_endpoint}-{vaultid}:8080/v1/feed/status",
+                    timeout=3,
+                )
+                response.raise_for_status()
+
+                statuses[vaultid] = {
+                    "status": "UP",
+                    "response": response.json(),
+                }
+
+            except requests.RequestException as e:
+                self.logger.error("Vault %s is unavailable: %s", vaultid, e)
+
+                statuses[vaultid] = {
+                    "status": "DOWN",
+                    "error": str(e),
+                 }
+
+        return statuses
 
     def bulk_download(self) -> List[Dict]:
-        response = requests.get(f"{self.backend_endpoint}/v1/feed/download?clean=true")
-        response.raise_for_status()
-        response_json = response.json()
-        self.logger.info("Bulk download finished successfully")
-
         documents = []
+        for vaultid in self.VAULTIDS:
+          response = requests.get(f"{self.backend_endpoint}-{vaultid}:8080/v1/feed/download?clean=true")
+          response.raise_for_status()
+          response_json = response.json()
+          self.logger.info("Bulk download finished successfully for vaultid %s",vaultid)
 
-        sections = [
-            ("transactions", "transactionId", "transaction"),
-            ("accounts", "accountId", "account"),
-            ("manifests", "manifestId", "manifest"),
-        ]
 
-        for section, id_key, type_name in sections:
-            for item in response_json.get(section, []):
-                # Encrypt if seed is set
-                if self.seed and "signedPayload" in item:
-                    item["signedPayloadCiphered"] = crypt.encrypt(item["signedPayload"], self.seed)
-                    del item["signedPayload"]
+          sections = [
+              ("transactions", "transactionId", "transaction"),
+              ("accounts", "accountId", "account"),
+              ("manifests", "manifestId", "manifest"),
+          ]
 
-                # Build content and metadata
-                content = {
-                    "accounts": [item] if section == "accounts" else [],
-                    "transactions": [item] if section == "transactions" else [],
-                    "manifests": [item] if section == "manifests" else [],
-                    "vaults": [],
-                }
-                meta = {"source": item["vaultId"], "type": type_name}
+          for section, id_key, type_name in sections:
+              for item in response_json.get(section, []):
+                  # Encrypt if seed is set
+                  if self.seed and "signedPayload" in item:
+                      item["signedPayloadCiphered"] = crypt.encrypt(item["signedPayload"], self.seed)
+                      del item["signedPayload"]
 
-                documents.append({
-                    "id": item[id_key],
-                    "content": json.dumps(content),
-                    "metadata": json.dumps(meta)
-                })
+                  # Build content and metadata
+                  content = {
+                      "accounts": [item] if section == "accounts" else [],
+                      "transactions": [item] if section == "transactions" else [],
+                      "manifests": [item] if section == "manifests" else [],
+                      "vaults": [],
+                  }
+                  meta = {"source": item["vaultId"], "type": type_name}
+
+                  documents.append({
+                      "id": item[id_key],
+                      "content": json.dumps(content),
+                      "metadata": json.dumps(meta)
+                  })
 
         return documents
 
@@ -113,7 +140,7 @@ class BackendPluginManager:
 
         try:
             r = requests.post(
-                f"{self.backend_endpoint}/v1/feed/decode",
+                f"{self.backend_endpoint}-{vaultid}:8080/v1/feed/decode",
                 files={
                     "files": (
                         "input.json",
@@ -161,7 +188,8 @@ class BackendPluginManager:
 
         return results
 
-    def bulk_upload(self, documents):
+    def bulk_upload(self, documents): 
+        global vaultid
         v_tx= {}
         v_ac= {}
         v_ma= {}
@@ -230,7 +258,7 @@ class BackendPluginManager:
 
                 files = {"files": (vaultid, open(vault_file.name, "rb"))}
                 response = requests.post(
-                    url=f"{self.backend_endpoint}/v1/feed/upload",
+                    url=f"{self.backend_endpoint}-{vaultid}:8080/v1/feed/upload",
                     files=files,
                 )
                 response.raise_for_status()

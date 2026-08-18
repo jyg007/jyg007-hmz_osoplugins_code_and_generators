@@ -98,7 +98,8 @@ COPY --chown=1001:0 /src/app-root /oso-root
 
 RUN rm -rf /app-root/.cargo
 
-RUN rpm -e --nodeps acl curl-minimal glib2 libcurl-minimal libarchive
+RUN rpm -e --nodeps acl curl-minimal glib2 libcurl-minimal libarchive gnupg2 gpgme libdnf librepo microdnf  libmount util-linux util-linux-core libblkid libfdisk libsmartcols libnghttp2 libsolv
+RUN rpm -e --nodeps  dbus-broker dbus systemd krb5-libs cyrus-sasl-lib openldap bzip2-libs gawk gzip ncurses-base p11-kit p11-kit-trust
 
 USER 1001
 ENV PATH="/opt/venv/bin:$PATH"
