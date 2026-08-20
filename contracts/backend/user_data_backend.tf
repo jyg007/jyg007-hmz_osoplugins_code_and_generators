@@ -40,10 +40,11 @@ resource "local_file" "docker_compose" {
       cold_bridge_image = var.COLD_BRIDGE_IMAGE,
       cold_vault_image = var.COLD_VAULT_IMAGE,
       kmsconnect_image = var.KMSCONNECT_IMAGE,
-      vault_id = var.VAULT_ID,
+      vault_id = split(" ",var.VAULT_ID),
       passphrase = var.PASSPHRASE,
       notary_messaging_public_key = var.NOTARY_MESSAGING_PUBLIC_KEY,
       seed = var.OSOENCRYPTIONPASS,
+      whitelisting = var.WHITELISTING,
     } },
   )
   filename = "docker-compose/docker-compose.yml"
@@ -57,6 +58,13 @@ resource "local_file" "docker_compose" {
   ]
 }
 
+
+resource "local_file" "whitelist" {
+  for_each = var.WHITELISTING == "1" ? toset(split(" ",trimspace(var.VAULT_ID))) : toset([])
+
+  source   = "${path.module}/whitelist.${each.value}"
+  filename = "docker-compose/whitelists/whitelist.${each.value}"
+}
 
 # archive of the folder containing docker-compose file. This folder could create additional resources such as files
 # to be mounted into containers, environment files etc. This is why all of these files get bundled in a tgz file (base64 encoded)
