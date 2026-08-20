@@ -24,7 +24,7 @@ resource "local_file" "frontend_plugin_docker_compose" {
       TOKEN_EXP = var.TOKEN_EXP
     } },
   )
-  filename = "frontend_plugin/docker-compose.yml"
+  filename = "frontend_plugin/play.yml"
   file_permission = "0664"
 }
 
@@ -38,7 +38,7 @@ resource "hpcr_tgz" "frontend_plugin_workload" {
 
 locals {
   frontend_plugin_compose = {
-    "compose" : {
+    "play" : {
       "archive" : hpcr_tgz.frontend_plugin_workload.rendered
     }
   }
