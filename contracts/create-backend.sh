@@ -19,6 +19,9 @@ pushd "$contract_root" || exit 1
 
 pushd backend || exit 1
 # shellcheck disable=SC2154
+./includegrep11.sh
+#mv env-crypto.yml ..
+
 ${tf} init && ${tf} destroy -auto-approve && ${tf} apply -auto-approve
 ${CP} -rf backend.yml ../output/backend/user-data
 popd || exit 1
