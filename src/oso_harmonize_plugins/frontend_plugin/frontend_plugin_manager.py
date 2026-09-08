@@ -348,6 +348,7 @@ class FrontendPluginManager:
                 "accounts": [],
                 "transactions": [],
                 "manifests": [],
+                "rewraps": [],
             }
 
             def write_document_set(documents, content_key: str, id_key: str):
@@ -376,7 +377,7 @@ class FrontendPluginManager:
 
                         # Encrypt content if seed provided
                         if self.seed:
-                            for section in ["transactions", "manifests", "accounts"]:
+                            for section in ["transactions", "manifests", "accounts", "rewraps"]:
                                 for section_item in content.get(section, []):
                                     if "signedPayload" in section_item:
                                         section_item["signedPayloadCiphered"] = crypt.encrypt(
@@ -414,6 +415,7 @@ class FrontendPluginManager:
                 ("transactions", "transactionId"),
                 ("accounts", "accountId"),
                 ("manifests", "manifestId"),
+                ("rewraps", "rewrapSecretMaterialsId"),
             ]:
                 write_document_set(documents, content_key, id_key)
 
@@ -427,7 +429,8 @@ class FrontendPluginManager:
                 "Performing bulk upload to harmonize (batch size=%s)",
                 len(content.get("transactions", []))
                 + len(content.get("accounts", []))
-                + len(content.get("manifests", [])),
+                + len(content.get("manifests", []))
+                + len(content.get("rewraps", [])),
             )
 
             try:
@@ -472,6 +475,7 @@ class FrontendPluginManager:
         transactions = []
         accounts = []
         manifests = []
+        rewraps = []
         doc_count = 0
 
         self.logger.info("Saving documents for bulk upload")
@@ -506,6 +510,7 @@ class FrontendPluginManager:
                 accounts.extend(contents.get("accounts", []))
                 manifests.extend(contents.get("manifests", []))
                 vaults.extend(contents.get("vaults", []))
+                rewraps.extend(contents.get("rewraps", []))
 
                 doc_count += 1
 
@@ -516,6 +521,7 @@ class FrontendPluginManager:
                         "transactions": transactions,
                         "manifests": manifests,
                         "vaults": vaults,
+                        "rewraps": rewraps,
                     })
 
                     # Reset batch
@@ -523,6 +529,7 @@ class FrontendPluginManager:
                     transactions = []
                     accounts = []
                     manifests = []
+                    rewraps = []
                     doc_count = 0
 
                 self.logger.info(
@@ -544,6 +551,7 @@ class FrontendPluginManager:
                 "transactions": transactions,
                 "manifests": manifests,
                 "vaults": vaults,
+                "rewraps": rewraps,
             })
 
         self.logger.info("Bulk upload finished successfully")
