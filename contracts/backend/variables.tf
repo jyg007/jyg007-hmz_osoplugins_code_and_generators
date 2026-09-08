@@ -106,3 +106,9 @@ variable "STATIC_IP" {
   description = "Deploying via OSO release that supports static IP"
   default     = true
 }
+
+variable "WHITELISTING" {
+  type    = string
+  description = "Counterparty whitelisting"
+  default = "0"
+}

@@ -1,44 +1,41 @@
 version: '3.6'
 
 services:
-%{ for vault_id in tpl.vault_id ~}
-  cold-bridge-${vault_id}:
+  cold-bridge-${tpl.vault_id}:
     image: ${tpl.cold_bridge_image}
     environment:
+      # Passphrase: "{{EMPTY}}" is needed so that the bridge data is not cyphered and can be managed by OSO
       Passphrase: "${tpl.passphrase}"
     restart: always
 
-  kmsconnect-${vault_id}:
+  kmsconnect-${tpl.vault_id}:
     image: ${tpl.kmsconnect_image}
     volumes:
       - "./ibm.cfg:/app/cfg/ibm.cfg:Z"
       - "./cert:/data/cert:ro,Z"
     restart: always
 
-  cold-vault-${vault_id}:
+  cold-vault-${tpl.vault_id}:
     image: ${tpl.cold_vault_image}
     depends_on:
-      - cold-bridge-${vault_id}
-      - kmsconnect-${vault_id}
+      - cold-bridge-${tpl.vault_id}
+      - kmsconnect-${tpl.vault_id}
     environment:
       PLATFORM: kms
       VAULT_BRIDGE_LOGLEVEL: 6
       VAULT_CORE_LOGLEVEL: 3
-      VAULT_KMS_ENDPOINT: kmsconnect-${vault_id}:10000
+      VAULT_KMS_ENDPOINT: kmsconnect-${tpl.vault_id}:10000
       VAULT_TRUSTED_SIG: ${tpl.notary_messaging_public_key}
-      VAULT_ID: ${vault_id}
-      HARMONIZE_CORE_ENDPOINT: http://cold-bridge-${vault_id}:8080/internal/v1
+      VAULT_ID: ${tpl.vault_id}
+      # This comes from the docker container that is spun up above. If it's normal vault, then it would be API end point.
+      HARMONIZE_CORE_ENDPOINT: http://cold-bridge-${tpl.vault_id}:8080/internal/v1
       HMZ_FEATURE_OPTIONAL_MAXIMUM_FEE: 'true'
     restart: always
 
-
-%{ endfor ~}
   backend-plugin:
     image: ${tpl.backend_plugin_image}
     depends_on:
-%{ for vault_id in tpl.vault_id ~}
-      - cold-vault-${vault_id}
-%{ endfor ~}
+      - cold-vault-${tpl.vault_id}
     ports:
       - "$${PORT}:$${PORT}"
     environment:
@@ -47,14 +44,12 @@ services:
       #Does not change
       BACKEND_ENDPOINT: http://cold-bridge
       PORT: 4000
-      VAULTIDS: "${join(" ", tpl.vault_id)}"
+      VAULTIDS: "${tpl.vault_id}"
       BRIDGE_FINGERPRINT: $${BRIDGE_FINGERPRINT}
       COMPONENT_CA_CERT: $${certs__ca}
       BACKEND_KEY: $${certs__app_key}
       BACKEND_CERT: $${certs__app_crt}
-      WHITELISTING: "${tpl.whitelisting}"
+      WHITELISTING: "0"
     restart: always
-%{ if tpl.whitelisting == "1" ~}
     volumes:
       - ./whitelists:/whitelists
-%{ endif ~}
