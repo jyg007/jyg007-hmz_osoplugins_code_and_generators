@@ -58,6 +58,8 @@ http {
     location @forbidden {
         return 403;
     }
+    client_max_body_size 100M;
+    client_body_buffer_size 256k;
 
     location / {
 

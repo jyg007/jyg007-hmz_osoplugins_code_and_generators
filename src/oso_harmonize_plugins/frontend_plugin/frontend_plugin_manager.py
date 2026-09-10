@@ -96,6 +96,7 @@ class FrontendPluginManager:
         self.vaultids = vaultids.replace(",", " ").split()
 
         self.seed = os.environ.get("OSOENCRYPTIONPASS", "")
+        self.batch_size = os.environ.get("BATCHSIZE", 20)
 
         self.root_cert_b64 = os.environ.get("ROOTCERT")
         with tempfile.NamedTemporaryFile(delete=False) as root_cert_file:
@@ -422,7 +423,6 @@ class FrontendPluginManager:
         return documents   
 
     def bulk_upload(self, documents):
-        BATCH_SIZE = 20
 
         def send_batch(content):
             self.logger.info(
@@ -515,7 +515,7 @@ class FrontendPluginManager:
                 doc_count += 1
 
                 # Flush every BATCH_SIZE documents
-                if doc_count >= BATCH_SIZE:
+                if doc_count >= self.batch_size:
                     send_batch({
                         "accounts": accounts,
                         "transactions": transactions,

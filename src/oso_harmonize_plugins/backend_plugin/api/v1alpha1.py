@@ -14,6 +14,8 @@ import sys
 from flask import abort, current_app, request
 from flask_restx import Namespace, Resource, fields
 
+from oso_harmonize_plugins.common import errors
+
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -26,6 +28,7 @@ content_model = api.model(
         "transactions": fields.List(fields.String()),
         "accounts": fields.List(fields.String()),
         "manifests": fields.List(fields.String()),
+        "rewraps": fields.List(fields.String()),
     },
 )
 
@@ -130,6 +133,13 @@ class Status(Resource):
         try:
             # Capture backend status if needed
             backend_result = current_app.bpm.backend_status()
+        except errors.SigningInProgress as e:
+            logger.info("Backend Signing still in progress")
+            return {
+                "status_code": 503,
+                "status": "Backend not ready",
+                "errors": [{"code": "Signing still in progress", "message": str(e)}]
+            }, 503
         except Exception as e:
             logger.exception("BPM backend status check failed")
             return {

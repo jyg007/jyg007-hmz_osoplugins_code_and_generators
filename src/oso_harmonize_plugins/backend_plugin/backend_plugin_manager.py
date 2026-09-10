@@ -16,6 +16,7 @@ import sys
 import tempfile
 from typing import Dict, List
 import io
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
@@ -26,6 +27,13 @@ from oso_harmonize_plugins.common import crypt, errors
 
 urllib3.disable_warnings(InsecureRequestWarning)
 
+# (counter prefix in the cold-bridge status payload, category key in uploads)
+SIGNING_CATEGORIES = (
+    ("transaction", "transactions"),
+    ("account", "accounts"),
+    ("manifest", "manifests"),
+    ("rewraps", "rewraps"),
+)
 
 class BackendPluginManager:
     def __init__(self):
@@ -36,6 +44,8 @@ class BackendPluginManager:
         self.whitelisting = os.environ.get("WHITELISTING", "0")
         logging.basicConfig(stream=sys.stdout, level=logging.INFO)
         self.logger = logging.getLogger(__name__)
+        self.state_file = os.environ.get( "SIGNING_STATE_FILE", "/tmp/backend_signing_state.json")
+        self.signing_stall_secs = int(os.environ.get("SIGNING_STALL_SECS", "300"))
 
         vaultids = os.environ.get("VAULTIDS") or os.environ.get("VAULTID")
 
@@ -44,21 +54,97 @@ class BackendPluginManager:
 
         self.VAULTIDS = {v.strip() for v in vaultids.replace(",", " ").split() if v.strip()}
 
+    def _state_file(self, vaultid):
+        base, ext = os.path.splitext(self.state_file)
+        return f"{base}_{vaultid}{ext}"
+
+    def _load_signing_state(self,vaultid):
+        try:
+            with open(self._state_file(vaultid)) as f:
+                return json.load(f)
+        except (OSError, ValueError):
+            return None
+
+    def _save_signing_state(self, vaultid,state):
+        try:
+            with open(self._state_file(vaultid), "w") as f:
+                json.dump(state, f)
+        except OSError as e:
+            self.logger.error(f"Could not persist signing state: {e}")
+
+    def _clear_signing_state(self,vaultid):
+        try:
+            os.remove(self._state_file(vaultid))
+        except OSError:
+            pass
+
     def backend_status(self):
         statuses = {}
-
         for vaultid in self.VAULTIDS:
             try:
-                response = requests.get(
-                    f"{self.backend_endpoint}-{vaultid}:8080/v1/feed/status",
-                    timeout=3,
-                )
-                response.raise_for_status()
+               response = requests.get(
+                   f"{self.backend_endpoint}-{vaultid}:8080/v1/feed/status",
+                   timeout=3,
+               )
+               response.raise_for_status()
 
-                statuses[vaultid] = {
-                    "status": "UP",
-                    "response": response.json(),
-                }
+               state = self._load_signing_state(vaultid)
+               if state is None:
+                   continue
+       
+               try:
+                   counters = response.json()
+               except ValueError:
+                   self.logger.warning(
+                       "vaultid={vaultid} Cold-bridge status response is not JSON;"
+                       " skipping signing-progress check"
+                   )
+                   return
+       
+               expected = state.get("expected", {})
+               pending = {}
+               shortfall = {}
+               for prefix, category in SIGNING_CATEGORIES:
+                   to_sign = int(counters.get(f"{prefix}ToSign") or 0)
+                   signed = int(counters.get(f"{prefix}Signed") or 0)
+                   if to_sign > 0:
+                       pending[category] = to_sign
+                   #  remaining = max(to_sign - signed, 0)
+
+                   #  if remaining > 0:
+                   #    pending[category] = remaining
+                   # Guard the window where the cold vault has not yet registered the
+                   # uploaded feed: all-zero counters right after an upload mean
+                   # "not started", not "done".
+                   if signed < int(expected.get(category, 0)):
+                       shortfall[category] = int(expected.get(category, 0)) - signed
+               if not pending and not shortfall:
+                   self.logger.info(f"Signing complete, vaultid={vaultid}, feed counters: {counters}")
+                   self._clear_signing_state(vaultid)
+                   return
+        
+               now = time.time()
+               if counters != state.get("last_counters"):
+                   state["last_counters"] = counters
+                   state["last_progress_at"] = now
+                   self._save_signing_state(vaultid,state)
+               elif now - state.get("last_progress_at", now) > self.signing_stall_secs:
+                   self.logger.error(
+                       f"Signing stalled for over {self.signing_stall_secs}s with"
+                       f" operations outstanding (pending={pending},"
+                       f" shortfall={shortfall}, counters={counters});"
+                       " reporting ready with a partial result set"
+                   )
+                   self._clear_signing_state(vaultid)
+                   return
+        
+               self.logger.info(f"Signing in progress, vaultid={vaultid}, feed counters: {counters}")
+               raise errors.SigningInProgress(f"vaultid={vaultid} pending={pending}")
+
+               statuses[vaultid] = {
+                   "status": "UP",
+                   "response": response.json(),
+               }
 
             except requests.RequestException as e:
                 self.logger.error("Vault %s is unavailable: %s", vaultid, e)
@@ -72,42 +158,55 @@ class BackendPluginManager:
 
     def bulk_download(self) -> List[Dict]:
         documents = []
+
+        sections = [
+            ("transactions", "transactionId", "transaction"),
+            ("accounts", "accountId", "account"),
+            ("manifests", "manifestId", "manifest"),
+            ("rewraps", "rewrapSecretMaterialsId", "rewrap"),
+        ]
+
         for vaultid in self.VAULTIDS:
-          response = requests.get(f"{self.backend_endpoint}-{vaultid}:8080/v1/feed/download?clean=true")
-          response.raise_for_status()
-          response_json = response.json()
-          self.logger.info("Bulk download finished successfully for vaultid %s",vaultid)
+                response = requests.get(
+                    f"{self.backend_endpoint}-{vaultid}:8080/v1/feed/download?clean=true"
+                )
+                response.raise_for_status()
 
+                response_json = response.json()
 
-          sections = [
-              ("transactions", "transactionId", "transaction"),
-              ("accounts", "accountId", "account"),
-              ("manifests", "manifestId", "manifest"),
-              ("rewraps", "rewrapSecretMaterialsId", "rewrap"),
-          ]
+                self.logger.info(
+                    "Bulk download batch received for vaultid %s",
+                    vaultid
+                )
 
-          for section, id_key, type_name in sections:
-              for item in response_json.get(section, []):
-                  # Encrypt if seed is set
-                  if self.seed and "signedPayload" in item:
-                      item["signedPayloadCiphered"] = crypt.encrypt(item["signedPayload"], self.seed)
-                      del item["signedPayload"]
+                for section, id_key, type_name in sections:
+                    for item in response_json.get(section, []):
+                        # Encrypt if seed is set
+                        if self.seed and "signedPayload" in item:
+                            item["signedPayloadCiphered"] = crypt.encrypt(
+                                item["signedPayload"],
+                                self.seed
+                            )
+                            del item["signedPayload"]
 
-                  # Build content and metadata
-                  content = {
-                      "accounts": [item] if section == "accounts" else [],
-                      "transactions": [item] if section == "transactions" else [],
-                      "manifests": [item] if section == "manifests" else [],
-                      "rewraps": [item] if section == "rewraps" else [],
-                      "vaults": [],
-                  }
-                  meta = {"source": item["vaultId"], "type": type_name}
+                        content = {
+                            "accounts": [item] if section == "accounts" else [],
+                            "transactions": [item] if section == "transactions" else [],
+                            "manifests": [item] if section == "manifests" else [],
+                            "rewraps": [item] if section == "rewraps" else [],
+                            "vaults": [],
+                        }
 
-                  documents.append({
-                      "id": item[id_key],
-                      "content": json.dumps(content),
-                      "metadata": json.dumps(meta)
-                  })
+                        meta = {
+                            "source": item["vaultId"],
+                            "type": type_name
+                        }
+
+                        documents.append({
+                            "id": item[id_key],
+                            "content": json.dumps(content),
+                            "metadata": json.dumps(meta)
+                        })
 
         return documents
 
@@ -272,6 +371,20 @@ class BackendPluginManager:
                 )
                 response.raise_for_status()
                 self.logger.info(f"Successfully uploaded vault {vaultid}")
+
+                now = time.time()
+                self._save_signing_state( vaultid,
+                    {
+                        "expected": {
+                            "transactions": len(v_tx[vaultid]),
+                            "accounts": len(v_ac[vaultid]),
+                            "manifests": len(v_ma[vaultid]),
+                        },
+                        "uploaded_at": now,
+                        "last_progress_at": now,
+                        "last_counters": None,
+                    }
+                )
             except requests.HTTPError as http_err:
                 self.logger.error(f"HTTP error uploading vault {vaultid}: {http_err} - {response.text}")
             except Exception as err:
