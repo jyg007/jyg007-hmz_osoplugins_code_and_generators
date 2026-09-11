@@ -14,6 +14,8 @@ import sys
 from flask import abort, current_app, request
 from flask_restx import Namespace, Resource, fields
 
+from oso_harmonize_plugins.common import errors
+
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -79,6 +81,9 @@ class Upload(Resource):
             logger.info(f"Processing {len(documents)} documents for upload")
             if len(documents) > 0:
                 current_app.fpm.bulk_upload(documents)
+        except errors.BroadcastError as e:
+            logger.error(f"Broadcast incomplete: {e}")
+            abort(503)
         except Exception as e:
             logger.exception(e)
             abort(500)
