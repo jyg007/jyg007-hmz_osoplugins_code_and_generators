@@ -385,6 +385,7 @@ class FrontendPluginManager:
                 "transactions": [],
                 "manifests": [],
                 "rewraps": [],
+                "backups": [],
             }
 
             def write_document_set(documents, content_key: str, id_key: str):
@@ -413,7 +414,7 @@ class FrontendPluginManager:
 
                         # Encrypt content if seed provided
                         if self.seed:
-                            for section in ["transactions", "manifests", "accounts", "rewraps"]:
+                            for section in ["transactions", "manifests", "accounts", "rewraps", "backups" ]:
                                 for section_item in content.get(section, []):
                                     if "signedPayload" in section_item:
                                         section_item["signedPayloadCiphered"] = crypt.encrypt(
@@ -452,6 +453,7 @@ class FrontendPluginManager:
                 ("accounts", "accountId"),
                 ("manifests", "manifestId"),
                 ("rewraps", "rewrapSecretMaterialsId"),
+                ("backups", "backupId"),
             ]:
                 write_document_set(documents, content_key, id_key)
 
@@ -463,6 +465,7 @@ class FrontendPluginManager:
         accounts = []
         manifests = []
         rewraps = []
+        backups = []
 
         doc_count = 0
         batch_num = 1
@@ -481,7 +484,7 @@ class FrontendPluginManager:
                 contents = json.loads(document["content"])
                 # Decrypt content
                 if self.seed:
-                    for section in ("transactions", "accounts", "manifests"):
+                    for section in ("transactions", "accounts", "manifests", "rewraps", "backups"):
                         for item in contents.get(section, []):
                             if "signedPayloadCiphered" in item:
                                 item["signedPayload"] = crypt.decrypt(
@@ -495,6 +498,7 @@ class FrontendPluginManager:
                 manifests.extend(contents.get("manifests", []))
                 vaults.extend(contents.get("vaults", []))
                 rewraps.extend(contents.get("rewraps", []))
+                backups.extend(contents.get("backups", []))
 
                 doc_count += 1
 
@@ -512,9 +516,9 @@ class FrontendPluginManager:
             if doc_count >= self.batch_size:
                 self.logger.info(f"Flushing batch {batch_num} ({doc_count} documents)")
                 self._flush_batch(
-                    batch_num, transactions, accounts, manifests, vaults, rewraps, failed_batches
+                    batch_num, transactions, accounts, manifests, vaults, rewraps, backups, failed_batches
                 )
-                vaults, transactions, accounts, manifests, rewraps, doc_count = [], [], [], [], [], 0
+                vaults, transactions, accounts, manifests, rewraps, backups, doc_count = [], [], [], [], [], [], 0
                 batch_num += 1
 
 
@@ -522,7 +526,7 @@ class FrontendPluginManager:
         if doc_count > 0:
             self.logger.info(f"Flushing final batch {batch_num} ({doc_count} documents)")
             self._flush_batch(
-                batch_num, transactions, accounts, manifests, vaults, rewraps, failed_batches
+                batch_num, transactions, accounts, manifests, vaults, rewraps, backups, failed_batches
             )
 
         if failed_batches:
@@ -536,10 +540,10 @@ class FrontendPluginManager:
             )
         self.logger.info("Bulk upload finished successfully")
 
-    def _flush_batch(self, batch_num, transactions, accounts, manifests, vaults, rewraps, failed_batches):
+    def _flush_batch(self, batch_num, transactions, accounts, manifests, vaults, rewraps, backups, failed_batches):
         """Send one batch; on failure, log it, record it, and let the run continue."""
         try:
-            self._send_batch(transactions, accounts, manifests, vaults, rewraps)
+            self._send_batch(transactions, accounts, manifests, vaults, rewraps, backups)
         except Exception as e:
             self.logger.exception(f"Batch {batch_num} failed to upload: {e}")
             failed_batches.append({"batch_num": batch_num, "error": str(e)})
@@ -548,13 +552,14 @@ class FrontendPluginManager:
         # 401: token may have expired mid-run; 429/5xx: transient on Ripple's side
         return response.status_code == 401 or response.status_code == 429 or response.status_code >= 500
 
-    def _send_batch(self, transactions, accounts, manifests, vaults, rewraps):
+    def _send_batch(self, transactions, accounts, manifests, vaults, rewraps, backups):
         content = {
             "accounts": accounts,
             "transactions": transactions,
             "manifests": manifests,
             "vaults": vaults,
             "rewraps": rewraps,
+            "backups": backups,
         }
 
         self.logger.info(

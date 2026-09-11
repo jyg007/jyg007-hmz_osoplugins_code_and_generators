@@ -33,6 +33,7 @@ SIGNING_CATEGORIES = (
     ("account", "accounts"),
     ("manifest", "manifests"),
     ("rewraps", "rewraps"),
+    ("backups", "backups"),
 )
 
 class BackendPluginManager:
@@ -164,6 +165,7 @@ class BackendPluginManager:
             ("accounts", "accountId", "account"),
             ("manifests", "manifestId", "manifest"),
             ("rewraps", "rewrapSecretMaterialsId", "rewrap"),
+            ("backups", "backupId", "backup"),
         ]
 
         for vaultid in self.VAULTIDS:
@@ -194,6 +196,7 @@ class BackendPluginManager:
                             "transactions": [item] if section == "transactions" else [],
                             "manifests": [item] if section == "manifests" else [],
                             "rewraps": [item] if section == "rewraps" else [],
+                            "backups": [item] if section == "backups" else [],
                             "vaults": [],
                         }
 
@@ -238,6 +241,7 @@ class BackendPluginManager:
                     "rewraps": [],
                     "transactions": [ input_obj ],
                     "manifests": [],
+                    "backups": [],
         }      
 
         try:
@@ -296,6 +300,7 @@ class BackendPluginManager:
         v_ac= {}
         v_ma= {}
         v_re= {}
+        v_ba= {}
 
         self.logger.info("Saving documents for bulk upload")
         for document in documents:
@@ -308,12 +313,14 @@ class BackendPluginManager:
                     v_ac[vaultid]=[]
                     v_ma[vaultid]=[]
                     v_re[vaultid]=[]
+                    v_ba[vaultid]=[]
                 # Map sections to their storage dict
                 section_map = {
                     "transactions": v_tx[vaultid],
                     "accounts": v_ac[vaultid],
                     "manifests": v_ma[vaultid],
                     "rewraps": v_re[vaultid],
+                    "backups": v_ba[vaultid],
                 }
 
                 for section, storage in section_map.items():
@@ -341,6 +348,7 @@ class BackendPluginManager:
                       "transactions": filtered,
                       "manifests": v_ma[vaultid],
                       "rewraps": v_re[vaultid],
+                      "backups": v_ba[vaultid],
                     }
                 else: 
                     self.logger.info(f"No whitelist file found for vaultid {vaultid}")
@@ -350,6 +358,7 @@ class BackendPluginManager:
                       "transactions": [] ,
                       "manifests": v_ma[vaultid],
                       "rewraps": v_re[vaultid],
+                      "backups": v_ba[vaultid],
                     }
             else:
                 content = {
@@ -358,6 +367,7 @@ class BackendPluginManager:
                   "transactions": v_tx[vaultid],
                   "manifests": v_ma[vaultid],
                   "rewraps": v_re[vaultid],
+                  "backups": v_ba[vaultid],
                 }
 
             try:
@@ -379,6 +389,7 @@ class BackendPluginManager:
                             "transactions": len(v_tx[vaultid]),
                             "accounts": len(v_ac[vaultid]),
                             "manifests": len(v_ma[vaultid]),
+                            "backups": len(v_ba[vaultid]),
                         },
                         "uploaded_at": now,
                         "last_progress_at": now,
